@@ -78,8 +78,6 @@ if __name__ == '__main__':
 
 
     # Importing firos specific scripts
-    from setup import launchSetup
-
     from include import confManager
     from include.logger import Log, initLog
     from include.server.firosServer import FirosServer
@@ -128,14 +126,12 @@ if __name__ == '__main__':
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
 
-        launchSetup()
-
         Log("INFO", "\nStarting Firos...")
         Log("INFO", "---------------------------------\n")
 
         #Topic Handler Routine:
         initPubAndSub()
-        loadMsgHandlers(confManager.getRobots(True, True))
+        loadMsgHandlers(confManager.getRobots(True))
         createConnectionListeners()
 
         Log("INFO", "\nPress Ctrl+C to Exit\n")
