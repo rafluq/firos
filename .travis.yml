@@ -1,12 +1,16 @@
 sudo: required
 
+stages:
+  - name: test
+  - name: deploy
+    if: (type NOT IN (pull_request)) AND branch IN (master)
+
 branches:
   only:
     - master
 
 jobs:
   include:
-
     - stage: test
       name: "Unit Tests"
 
@@ -21,6 +25,7 @@ jobs:
         - true
       #  - python tests.py
 
+
     - stage: test
       name: "Documentation Tests"
       language: node_js
@@ -32,3 +37,19 @@ jobs:
       script:
         - npm run lint:md
         - npm run lint:text
+
+
+    - stage: deploy
+      name: "Docker build and push"
+      language: ruby
+      on:
+        branch: master
+
+      services:
+        - docker
+
+      script:
+        - docker build -f ./docker/Dockerfile --tag fhgiml130/firos:latest .
+        - docker-compose -f ./docker/docker-compose.yml build
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker push fhgiml130/firos:latest
