@@ -44,6 +44,7 @@ class CbPublisher(object):
     # Keeps track of the posted Content on the ContextBroker
     # via posted_history[ROBOT_ID][TOPIC] 
     posted_history = {}
+    definitionDict = {}
     CB_HEADER = {'Content-Type': 'application/json'}
     CB_BASE_URL = None
 
@@ -94,9 +95,8 @@ class CbPublisher(object):
         self.posted_history[robotID][topic] = rawMsg
         
         # Set Definition-Dict
-        definitionDict = {}
-        definitionDict[topic] = msgDefintionDict
-        completeJsonStr = ObjectFiwareConverter.obj2Fiware(self.posted_history[robotID], ind=0, dataTypeDict=definitionDict,  ignorePythonMetaData=True) 
+        self.definitionDict[topic] = msgDefintionDict
+        completeJsonStr = ObjectFiwareConverter.obj2Fiware(self.posted_history[robotID], ind=0, dataTypeDict=self.definitionDict,  ignorePythonMetaData=True) 
 
         # format json, so that the contextbroker accepts it.
         partJsonStr =  json.dumps({
