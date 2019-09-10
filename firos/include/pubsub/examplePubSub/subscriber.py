@@ -7,7 +7,7 @@ class SomeExampleSubscriber(Subscriber):
         This class just needs to inherit Subscriber.
 
         You can here specify your own Routine which should happen. 
-        This class subscribes to data (which FIROS receives).
+        This class subscribes to data (which FIROS should get).
     '''
 
 
