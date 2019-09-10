@@ -31,8 +31,7 @@ from include.libLoader import LibLoader
 from include import confManager
 
 # PubSub Handlers
-from include.contextbroker.cbPublisher import CbPublisher
-from include.contextbroker.cbSubscriber import CbSubscriber
+from include.pubsub.genericPubSub import PubSub
 
 # this Message is needed, for the Listeners on connect on disconnect
 import std_msgs.msg
@@ -66,14 +65,11 @@ ROS_MESSAGE_CLASSES = {}
 # If shutdown is signaled, do stop posting ROS-Messages to the ContextBroker
 SHUTDOWN_SIGNAL = False
 
-
-CloudSubscriber = None
-CloudPublisher = None
+CloudPubSub = None
 
 def initPubAndSub():
-    global CloudPublisher, CloudSubscriber
-    CloudSubscriber = CbSubscriber()
-    CloudPublisher = CbPublisher()
+    global CloudPubSub
+    CloudPubSub = PubSub()
 
 def loadMsgHandlers(robot_data):
     ''' This method initializes The Publisher and Subscriber for ROS and 
@@ -134,7 +130,7 @@ def loadMsgHandlers(robot_data):
 
         # After initializing ROS-PUB/SUBs, intitialize ContextBroker-Subscriber based on ROS-Publishers for each robot
         if robotID in ROS_PUBLISHER:
-            CloudSubscriber.subscribeToCB(str(robotID), ROS_PUBLISHER[robotID].keys())
+            CloudPubSub.subscribe(str(robotID), ROS_PUBLISHER[robotID].keys(), ROS_TOPIC_AS_DICT)
             Log("INFO", "\n")
             Log("INFO", "Subscribed to " + robotID + "'s topics\n")
 
@@ -151,14 +147,14 @@ def _publishToCBRoutine(data, args):
     '''
     if not SHUTDOWN_SIGNAL:
         robot = args['robot']
-        topic = args['topic'] # Retreiving additional Infos, which were set on initialization
+        topic = args['topic'] # Retreiving additional Infos, which were set on initialization 
          
         t = time.time() * 1000 # Get Millis
         if (robot+topic) in LAST_PUBLISH_TIME and LAST_PUBLISH_TIME[robot+topic] >= t:
             # Case: We want it to publish again, but we did not wait PUB_FREQUENCY milliseconds
             return 
 
-        CloudPublisher.publishToCB(robot, topic, data, ROS_TOPIC_AS_DICT[topic])
+        CloudPubSub.publish(robot, topic, data, ROS_TOPIC_AS_DICT)
         ROS_SUBSCRIBER_LAST_MESSAGE[robot][topic] = data
         LAST_PUBLISH_TIME[robot+topic] = t + C.PUB_FREQUENCY
 
@@ -201,8 +197,8 @@ class RosTopicHandler:
         '''
         SHUTDOWN_SIGNAL = True
 
-        CloudSubscriber.unsubscribeALLFromCB()
-        CloudPublisher.unpublishALLFromCB()
+        CloudPubSub.unsubscribe()
+        CloudPubSub.unpublish()
 
         Log("INFO", "Unsubscribing topics...")
         for subscriber in subscribers:

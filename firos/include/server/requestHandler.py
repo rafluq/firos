@@ -39,8 +39,7 @@ except ImportError:
 from include.logger import Log
 from include.confManager import getRobots
 from include.ros.rosConfigurator import RosConfigurator
-from include.ros.topicHandler import RosTopicHandler, loadMsgHandlers, ROS_PUBLISHER, ROS_SUBSCRIBER, ROS_TOPIC_AS_DICT
-from include.contextbroker.cbSubscriber import CbSubscriber
+from include.ros.topicHandler import RosTopicHandler, loadMsgHandlers, ROS_PUBLISHER, ROS_SUBSCRIBER, ROS_TOPIC_AS_DICT, ROS_SUBSCRIBER_LAST_MESSAGE
 from include.constants import Constants as C 
 from include.FiwareObjectConverter.objectFiwareConverter import ObjectFiwareConverter
 
@@ -110,7 +109,7 @@ def getAction(path, method):
 
 def requestFromCB(request, action):
     ''' The ContextBroker is informing us via one of our subscriptions.
-        We convert the received content back with the cbSubscriber and publish 
+        We convert the received content back and publish 
         it in ROS.
 
         request: The request from Context-Broker
@@ -174,12 +173,11 @@ def onRobotData(request, action):
     '''
 
     name = request.path[7:]
-    import include.ros.topicHandler as th
-    lastPubData = th.ROS_SUBSCRIBER_LAST_MESSAGE[name]
+    lastPubData = ROS_SUBSCRIBER_LAST_MESSAGE[name]
     lastPubData["type"] = C.CONTEXT_TYPE
     lastPubData["id"] = name
 
-    json = ObjectFiwareConverter.obj2Fiware(lastPubData, dataTypeDict=th.ROS_TOPIC_AS_DICT,ignorePythonMetaData=True, ind=0)
+    json = ObjectFiwareConverter.obj2Fiware(lastPubData, dataTypeDict=ROS_TOPIC_AS_DICT,ignorePythonMetaData=True, ind=0)
 
     # Return the Information provided by the Context-Broker
     end_request(request, ('Content-Type', 'application/json'), 200, json)
@@ -319,7 +317,7 @@ def buildTypeStruct(obj):
 def convertReceivedDataFromCB(jsonData):
     ''' This parses the Input Back into a TypeValue-object via the 
         Object-Converter. This method is here to uniform the Obejct-Conversions 
-        in CbPublisher and CbSubscriber
+        in Publisher and Subscriber
 
         topic:    The topic, which should be converted. 
                     the topic should have "id", "type" and "TOPIC" in it

@@ -32,11 +32,12 @@ except ImportError:
 
 from include.constants import Constants as C
 from include.logger import Log
+from include.pubsub.genericPubSub import Subscriber
 
 
 
 
-class CbSubscriber(object):
+class CbSubscriber(Subscriber):
     ''' The CbSubscriber handles the subscriptions on the ContextBroker.
         Only the url CONTEXT_BROKER / v2 / subcriptions  is used here!
         As on CbPublisher on shutdown all subscriptions are deleted form 
@@ -62,7 +63,7 @@ class CbSubscriber(object):
         self.FIROS_NOTIFY_URL = "http://{}:{}/firos".format(C.MAP_SERVER_ADRESS, C.MAP_SERVER_PORT)
 
 
-    def subscribeToCB(self, robotID, topicList):
+    def subscribe(self, robotID, topicList, msgDefintions):
         ''' This method starts for each topic an own thread, which handles the subscription
 
             robotID: The string of the robotID
@@ -77,7 +78,7 @@ class CbSubscriber(object):
                 thread.start_new_thread(self.subscribeThread, (robotID, topic)) #Start Thread via subscription         
 
 
-    def unsubscribeALLFromCB(self):
+    def unsubscribe(self):
         ''' Simply unsubscribed from all tracked subscriptions
         '''
         for robotID in self.subscriptionIds:

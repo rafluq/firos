@@ -27,11 +27,12 @@ import os
 from include.logger import Log
 from include.constants import Constants as C
 from include.FiwareObjectConverter.objectFiwareConverter import ObjectFiwareConverter
+from include.pubsub.genericPubSub import Publisher
 
 
 
 
-class CbPublisher(object):
+class CbPublisher(Publisher):
     ''' The CbPublisher handles the Enities on CONTEXT_BROKER / v2 / entities .
         It creates not creaed Entities and updates their attributes via 'publishToCB'.
         On Shutdown the tracked Entities are deleted. 
@@ -53,7 +54,7 @@ class CbPublisher(object):
         '''
         self.CB_BASE_URL = "http://{}:{}/v2/entities/".format(C.CONTEXTBROKER_ADRESS, C.CONTEXTBROKER_PORT)
 
-    def publishToCB(self, robotID, topic, rawMsg, msgDefintionDict):
+    def publish(self, robotID, topic, rawMsg, msgDefintionDict):
         ''' This is the actual publish-Routine which updates and creates Entities on the
             ContextBroker. It also keeps track via posted_history on already posted entities and topics
 
@@ -82,7 +83,7 @@ class CbPublisher(object):
         if 'descriptions' not in self.posted_history[robotID]:
             self.posted_history[robotID]['descriptions'] = self._loadDescriptions(robotID)
             if self.posted_history[robotID]['descriptions'] is not None:
-                self.publishToCB(robotID, 'descriptions', self.posted_history[robotID]['descriptions'], None)
+                self.publish(robotID, 'descriptions', self.posted_history[robotID]['descriptions'], None)
 
         # check if previous posted topic type is the same, iff not, we do not post it to the context broker
         if (self.posted_history[robotID][topic] != {} and topic != "descriptions"  
@@ -94,9 +95,10 @@ class CbPublisher(object):
         # Replace previous rawMsg with current one
         self.posted_history[robotID][topic] = rawMsg
         
-        # Set Definition-Dict
-        self.definitionDict[topic] = msgDefintionDict
-        completeJsonStr = ObjectFiwareConverter.obj2Fiware(self.posted_history[robotID], ind=0, dataTypeDict=self.definitionDict,  ignorePythonMetaData=True) 
+        # Set Definition-Dict if not set
+        if msgDefintionDict is None:
+            msgDefintionDict = {}
+        completeJsonStr = ObjectFiwareConverter.obj2Fiware(self.posted_history[robotID], ind=0, dataTypeDict=msgDefintionDict,  ignorePythonMetaData=True) 
 
         # format json, so that the contextbroker accepts it.
         partJsonStr =  json.dumps({
@@ -109,7 +111,7 @@ class CbPublisher(object):
         self._responseCheck(response, attrAction=1, topEnt=topic)
 
 
-    def unpublishALLFromCB(self):
+    def unpublish(self):
         ''' Removes all previously tracked Entities/Robots on ContextBroker
         '''
         for robotID in self.posted_history:
