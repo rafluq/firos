@@ -50,29 +50,14 @@ and `structure` as follows:
 
 ## GET /robot/NAME
 
-Gets the data which is published/subscribed by the robot in the Context-Broker. Here the contents of the Context Broker
-is shown.
+Gets the data which is published by the robot to e.g the Context-Broker.
 
-Here as an example: the content of `turtlesim` with its publishing topic `pose`:
+Here as an example for `/robot/turtle1`: the content of `turtle1` with its publishing topic `pose`:
 
 ```json
 {
     "id": "turtle1",
     "type": "MyROBOT",
-    "descriptions": {
-        "type": "object",
-        "value": {
-            "MySanatiyValue": {
-                "type": "number",
-                "value": 1
-            },
-            "SomeReferenceLink": {
-                "type": "string",
-                "value": "http://wiki.ros.org/ROS/Tutorials/UnderstandingNodes"
-            }
-        },
-        "metadata": {}
-    },
     "pose": {
         "type": "turtlesim.Pose",
         "value": {

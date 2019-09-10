@@ -140,7 +140,7 @@ def listRobots(request, action):
         and returns them back as json
 
         TODO DL, currently a List of containing 'topics' with a list of topics is returned
-        Better would be a list of robotIds with their corersponding topics and types
+        Better would be a list of robotIds with their corresponding topics and types
     '''
     robots = getRobots(False)
     data = []
@@ -167,21 +167,22 @@ def listRobots(request, action):
 
 
 def onRobotData(request, action):
-    ''' Returns the actual Content of the Context-Broker onto
-        the page. Here we only query the ContextBroker, No Manipulation
-        is done here.
+    ''' Returns the actual Content of the last sent Data  of this robot onto
+        the page. No Manipulation is done here. NOTE: only the data the robot published is shown here!
 
-        Depending what is written after 'robot', we just map it to /v2/entities/XXXXX
-        and also return the same status_code
+        Depending what is written after 'robot', specific content is published
     '''
-    partURL =request.path[7:] # Depends on prefix '/robot/'
 
-    # Only used to query information from Context-Broker
-    cb_base_url = "http://{}:{}/v2/entities/".format(C.CONTEXTBROKER_ADRESS, C.CONTEXTBROKER_PORT)
-    response = requests.get(cb_base_url + partURL)
+    name = request.path[7:]
+    import include.ros.topicHandler as th
+    lastPubData = th.ROS_SUBSCRIBER_LAST_MESSAGE[name]
+    lastPubData["type"] = C.CONTEXT_TYPE
+    lastPubData["id"] = name
+
+    json = ObjectFiwareConverter.obj2Fiware(lastPubData, dataTypeDict=th.ROS_TOPIC_AS_DICT,ignorePythonMetaData=True, ind=0)
 
     # Return the Information provided by the Context-Broker
-    end_request(request, ('Content-Type', 'application/json'), response.status_code, response.text)
+    end_request(request, ('Content-Type', 'application/json'), 200, json)
 
 
 def onConnect(request, action):
