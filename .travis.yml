@@ -22,8 +22,8 @@ jobs:
         - pip install -r requirements.txt
 
       script:
-        - true
-      #  - python tests.py
+        - cd firos
+        - python -m unittest discover
 
 
     - stage: test
