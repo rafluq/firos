@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 __author__ = "Dominik Lux"
-__credits__ = ["Dominik Lux!"]
+__credits__ = ["Dominik Lux"]
 __maintainer__ = "Dominik Lux"
 
 import unittest
@@ -41,11 +41,7 @@ class Test_Constants(unittest.TestCase):
         C.MAP_SERVER_ADRESS = None
         C.MAP_SERVER_PORT = 10100
         C.ROSBRIDGE_PORT = 9090
-        C.CONTEXTBROKER_ADRESS = None
-        C.CONTEXTBROKER_PORT = None
-        C.CB_THROTTLING = 0
-        C.CB_SUB_LENGTH = 300
-        C.CB_SUB_REFRESH = 0.9
+        C.DATA = None
         C.CONTEXT_TYPE = "ROBOT"
         C.PUB_FREQUENCY = 0
         C.ROS_NODE_NAME = "firos"
@@ -62,12 +58,7 @@ class Test_Constants(unittest.TestCase):
         self.assertEqual(C.MAP_SERVER_ADRESS, None)
         self.assertEqual(C.MAP_SERVER_PORT, 10100)
         self.assertEqual(C.ROSBRIDGE_PORT, 9090)
-        self.assertEqual(C.CONTEXTBROKER_ADRESS, None)
-        self.assertEqual(C.CONTEXTBROKER_PORT, None)
-
-        self.assertEqual(C.CB_THROTTLING, 0)
-        self.assertEqual(C.CB_SUB_LENGTH, 300)
-        self.assertEqual(C.CB_SUB_REFRESH, 0.9)
+        self.assertEqual(C.DATA, None)
         self.assertEqual(C.CONTEXT_TYPE, "ROBOT")
         self.assertEqual(C.PUB_FREQUENCY, 0)
 
@@ -92,14 +83,29 @@ class Test_Constants(unittest.TestCase):
     def test_Constants_With_Non_Existent_Config_JSON(self):
         C = Constants
         Constants.configured = False
-        with self.assertRaises(Exception):
-            C.init("THIS_IS_A_NON_EXISTEN_PATH")
+        C.init("NON_EXISTENT_PATH")
+
+        self.assertEqual(C.LOGLEVEL, "INFO")
+        self.assertEqual(C.INTERFACE, "public")
+
+        # self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
+        self.assertEqual(C.MAP_SERVER_PORT, 10100)
+        self.assertEqual(C.ROSBRIDGE_PORT, 9090)
+        self.assertEqual(C.DATA, {})
+        self.assertEqual(C.CONTEXT_TYPE, "ROBOT")
+        self.assertEqual(C.PUB_FREQUENCY, 0)
+
+        self.assertEqual(C.ROS_NODE_NAME, "firos")
+        self.assertEqual(C.ROS_SUB_QUEUE_SIZE, 10)
+
+        self.assertEqual(C.PATH, "NON_EXISTENT_PATH")
+        self.assertEqual(C.configured, True)
 
 
     def test_Constants_With_Missing_Interface(self):
         C = Constants
         Constants.configured = False
-        C.init("../testConfigFiles/missInterface")
+        C.init("../test_data/testConfigFiles/missInterface")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
         self.assertEqual(C.INTERFACE, "public")
@@ -107,19 +113,14 @@ class Test_Constants(unittest.TestCase):
         #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
-        self.assertEqual(C.CONTEXTBROKER_ADRESS, "TestAdress")
-        self.assertEqual(C.CONTEXTBROKER_PORT, 1234)
-
-        self.assertEqual(C.CB_THROTTLING, 0)
-        self.assertEqual(C.CB_SUB_LENGTH, 99)
-        self.assertEqual(C.CB_SUB_REFRESH, 0.1)
+        self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missInterface"))
         self.assertEqual(C.CONTEXT_TYPE, "TestContext")
         self.assertEqual(C.PUB_FREQUENCY, 1)
 
         self.assertEqual(C.ROS_NODE_NAME, "TestFIROS")
         self.assertEqual(C.ROS_SUB_QUEUE_SIZE, 9)
 
-        self.assertEqual(C.PATH, "../testConfigFiles/missInterface")
+        self.assertEqual(C.PATH, "../test_data/testConfigFiles/missInterface")
         self.assertEqual(C.configured, True)
             
 
@@ -128,7 +129,7 @@ class Test_Constants(unittest.TestCase):
     def test_Constants_With_Missing_log_level(self):
         C = Constants
         Constants.configured = False
-        C.init("../testConfigFiles/missLogLevel")
+        C.init("../test_data/testConfigFiles/missLogLevel")
 
         self.assertEqual(C.LOGLEVEL, "INFO")
         self.assertEqual(C.INTERFACE, "lo")
@@ -136,26 +137,21 @@ class Test_Constants(unittest.TestCase):
         #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
-        self.assertEqual(C.CONTEXTBROKER_ADRESS, "TestAdress")
-        self.assertEqual(C.CONTEXTBROKER_PORT, 1234)
-
-        self.assertEqual(C.CB_THROTTLING, 0)
-        self.assertEqual(C.CB_SUB_LENGTH, 99)
-        self.assertEqual(C.CB_SUB_REFRESH, 0.1)
+        self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missLogLevel"))
         self.assertEqual(C.CONTEXT_TYPE, "TestContext")
         self.assertEqual(C.PUB_FREQUENCY, 1)
 
         self.assertEqual(C.ROS_NODE_NAME, "TestFIROS")
         self.assertEqual(C.ROS_SUB_QUEUE_SIZE, 9)
 
-        self.assertEqual(C.PATH, "../testConfigFiles/missLogLevel")
+        self.assertEqual(C.PATH, "../test_data/testConfigFiles/missLogLevel")
         self.assertEqual(C.configured, True)
             
 
     def test_Constants_With_Missing_server_port(self):
         C = Constants
         Constants.configured = False
-        C.init("../testConfigFiles/missServerPort")
+        C.init("../test_data/testConfigFiles/missServerPort")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
         self.assertEqual(C.INTERFACE, "lo")
@@ -163,33 +159,21 @@ class Test_Constants(unittest.TestCase):
         #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
         self.assertEqual(C.MAP_SERVER_PORT, 10100)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
-        self.assertEqual(C.CONTEXTBROKER_ADRESS, "TestAdress")
-        self.assertEqual(C.CONTEXTBROKER_PORT, 1234)
-
-        self.assertEqual(C.CB_THROTTLING, 0)
-        self.assertEqual(C.CB_SUB_LENGTH, 99)
-        self.assertEqual(C.CB_SUB_REFRESH, 0.1)
+        self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missServerPort"))
         self.assertEqual(C.CONTEXT_TYPE, "TestContext")
         self.assertEqual(C.PUB_FREQUENCY, 1)
 
         self.assertEqual(C.ROS_NODE_NAME, "TestFIROS")
         self.assertEqual(C.ROS_SUB_QUEUE_SIZE, 9)
 
-        self.assertEqual(C.PATH, "../testConfigFiles/missServerPort")
+        self.assertEqual(C.PATH, "../test_data/testConfigFiles/missServerPort")
         self.assertEqual(C.configured, True)
 
 
     def test_Constants_With_Missing_ContextBroker(self):
         C = Constants
         Constants.configured = False
-        with self.assertRaises(Exception):
-            C.init("../testConfigFiles/missContextBroker")
-
-
-    def test_Constants_With_Missing_node_name(self):
-        C = Constants
-        Constants.configured = False
-        C.init("../testConfigFiles/missNodeName")
+        C.init("../test_data/testConfigFiles/missContextBroker")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
         self.assertEqual(C.INTERFACE, "lo")
@@ -197,25 +181,42 @@ class Test_Constants(unittest.TestCase):
         #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
-        self.assertEqual(C.CONTEXTBROKER_ADRESS, "TestAdress")
-        self.assertEqual(C.CONTEXTBROKER_PORT, 1234)
+        self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missContextBroker"))
+        self.assertEqual(C.CONTEXT_TYPE, "TestContext")
+        self.assertEqual(C.PUB_FREQUENCY, 1)
 
-        self.assertEqual(C.CB_THROTTLING, 0)
-        self.assertEqual(C.CB_SUB_LENGTH, 99)
-        self.assertEqual(C.CB_SUB_REFRESH, 0.1)
+        self.assertEqual(C.ROS_NODE_NAME, "TestFIROS")
+        self.assertEqual(C.ROS_SUB_QUEUE_SIZE, 9)
+
+        self.assertEqual(C.PATH, "../test_data/testConfigFiles/missContextBroker")
+        self.assertEqual(C.configured, True)
+
+
+    def test_Constants_With_Missing_node_name(self):
+        C = Constants
+        Constants.configured = False
+        C.init("../test_data/testConfigFiles/missNodeName")
+
+        self.assertEqual(C.LOGLEVEL, "WARNING")
+        self.assertEqual(C.INTERFACE, "lo")
+
+        #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
+        self.assertEqual(C.MAP_SERVER_PORT, 12345)
+        self.assertEqual(C.ROSBRIDGE_PORT, 4321)
+        self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missNodeName"))
         self.assertEqual(C.CONTEXT_TYPE, "TestContext")
         self.assertEqual(C.PUB_FREQUENCY, 1)
 
         self.assertEqual(C.ROS_NODE_NAME, "firos")
         self.assertEqual(C.ROS_SUB_QUEUE_SIZE, 9)
 
-        self.assertEqual(C.PATH, "../testConfigFiles/missNodeName")
+        self.assertEqual(C.PATH, "../test_data/testConfigFiles/missNodeName")
         self.assertEqual(C.configured, True)
 
     def test_Constants_With_Missing_ros_subscriber_queue(self):
         C = Constants
         Constants.configured = False
-        C.init("../testConfigFiles/missRosSubscriberQueue")
+        C.init("../test_data/testConfigFiles/missRosSubscriberQueue")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
         self.assertEqual(C.INTERFACE, "lo")
@@ -223,25 +224,20 @@ class Test_Constants(unittest.TestCase):
         #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
-        self.assertEqual(C.CONTEXTBROKER_ADRESS, "TestAdress")
-        self.assertEqual(C.CONTEXTBROKER_PORT, 1234)
-
-        self.assertEqual(C.CB_THROTTLING, 0)
-        self.assertEqual(C.CB_SUB_LENGTH, 99)
-        self.assertEqual(C.CB_SUB_REFRESH, 0.1)
+        self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missRosSubscriberQueue"))
         self.assertEqual(C.CONTEXT_TYPE, "TestContext")
         self.assertEqual(C.PUB_FREQUENCY, 1)
 
         self.assertEqual(C.ROS_NODE_NAME, "TestFIROS")
         self.assertEqual(C.ROS_SUB_QUEUE_SIZE, 10)
 
-        self.assertEqual(C.PATH, "../testConfigFiles/missRosSubscriberQueue")
+        self.assertEqual(C.PATH, "../test_data/testConfigFiles/missRosSubscriberQueue")
         self.assertEqual(C.configured, True)
 
     def test_Constants_With_Missing_context_type(self):
         C = Constants
         Constants.configured = False
-        C.init("../testConfigFiles/missContextType")
+        C.init("../test_data/testConfigFiles/missContextType")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
         self.assertEqual(C.INTERFACE, "lo")
@@ -249,19 +245,14 @@ class Test_Constants(unittest.TestCase):
         #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
-        self.assertEqual(C.CONTEXTBROKER_ADRESS, "TestAdress")
-        self.assertEqual(C.CONTEXTBROKER_PORT, 1234)
-
-        self.assertEqual(C.CB_THROTTLING, 0)
-        self.assertEqual(C.CB_SUB_LENGTH, 99)
-        self.assertEqual(C.CB_SUB_REFRESH, 0.1)
+        self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missContextType"))
         self.assertEqual(C.CONTEXT_TYPE, "ROBOT")
         self.assertEqual(C.PUB_FREQUENCY, 1)
 
         self.assertEqual(C.ROS_NODE_NAME, "TestFIROS")
         self.assertEqual(C.ROS_SUB_QUEUE_SIZE, 9)
 
-        self.assertEqual(C.PATH, "../testConfigFiles/missContextType")
+        self.assertEqual(C.PATH, "../test_data/testConfigFiles/missContextType")
         self.assertEqual(C.configured, True)
         
 
@@ -269,7 +260,7 @@ class Test_Constants(unittest.TestCase):
     def test_Constants_With_Missing_Pub_Frequency(self):
         C = Constants
         Constants.configured = False
-        C.init("../testConfigFiles/missPubFrequency")
+        C.init("../test_data/testConfigFiles/missPubFrequency")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
         self.assertEqual(C.INTERFACE, "lo")
@@ -277,26 +268,21 @@ class Test_Constants(unittest.TestCase):
         #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
-        self.assertEqual(C.CONTEXTBROKER_ADRESS, "TestAdress")
-        self.assertEqual(C.CONTEXTBROKER_PORT, 1234)
-
-        self.assertEqual(C.CB_THROTTLING, 0)
-        self.assertEqual(C.CB_SUB_LENGTH, 99)
-        self.assertEqual(C.CB_SUB_REFRESH, 0.1)
+        self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missPubFrequency"))
         self.assertEqual(C.CONTEXT_TYPE, "TestContext")
         self.assertEqual(C.PUB_FREQUENCY, 0)
 
         self.assertEqual(C.ROS_NODE_NAME, "TestFIROS")
         self.assertEqual(C.ROS_SUB_QUEUE_SIZE, 9)
 
-        self.assertEqual(C.PATH, "../testConfigFiles/missPubFrequency")
+        self.assertEqual(C.PATH, "../test_data/testConfigFiles/missPubFrequency")
         self.assertEqual(C.configured, True)
 
 
     def test_Constants_With_Missing_Ros_Bridge(self):
         C = Constants
         Constants.configured = False
-        C.init("../testConfigFiles/missRosBridge")
+        C.init("../test_data/testConfigFiles/missRosBridge")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
         self.assertEqual(C.INTERFACE, "lo")
@@ -304,26 +290,21 @@ class Test_Constants(unittest.TestCase):
         #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 9090)
-        self.assertEqual(C.CONTEXTBROKER_ADRESS, "TestAdress")
-        self.assertEqual(C.CONTEXTBROKER_PORT, 1234)
-
-        self.assertEqual(C.CB_THROTTLING, 0)
-        self.assertEqual(C.CB_SUB_LENGTH, 99)
-        self.assertEqual(C.CB_SUB_REFRESH, 0.1)
+        self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missRosBridge"))
         self.assertEqual(C.CONTEXT_TYPE, "TestContext")
         self.assertEqual(C.PUB_FREQUENCY, 1)
 
         self.assertEqual(C.ROS_NODE_NAME, "TestFIROS")
         self.assertEqual(C.ROS_SUB_QUEUE_SIZE, 9)
 
-        self.assertEqual(C.PATH, "../testConfigFiles/missRosBridge")
+        self.assertEqual(C.PATH, "../test_data/testConfigFiles/missRosBridge")
         self.assertEqual(C.configured, True)
 
 
     def test_Constants_With_minimal_Configuration(self):
         C = Constants
         Constants.configured = False
-        C.init("../testConfigFiles/minimal")
+        C.init("../test_data/testConfigFiles/minimal")
 
         self.assertEqual(C.LOGLEVEL, "INFO")
         self.assertEqual(C.INTERFACE, "public")
@@ -331,17 +312,12 @@ class Test_Constants(unittest.TestCase):
         # self.assertEqual(C.MAP_SERVER_ADRESS, None)
         self.assertEqual(C.MAP_SERVER_PORT, 10100)
         self.assertEqual(C.ROSBRIDGE_PORT, 9090)
-        self.assertEqual(C.CONTEXTBROKER_ADRESS, "TestAdress")
-        self.assertEqual(C.CONTEXTBROKER_PORT, 1234)
-
-        self.assertEqual(C.CB_THROTTLING, 0)
-        self.assertEqual(C.CB_SUB_LENGTH, 300)
-        self.assertEqual(C.CB_SUB_REFRESH, 0.9)
+        self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/minimal"))
         self.assertEqual(C.CONTEXT_TYPE, "ROBOT")
         self.assertEqual(C.PUB_FREQUENCY, 0)
 
         self.assertEqual(C.ROS_NODE_NAME, "firos")
         self.assertEqual(C.ROS_SUB_QUEUE_SIZE, 10)
 
-        self.assertEqual(C.PATH, "../testConfigFiles/minimal")
+        self.assertEqual(C.PATH, "../test_data/testConfigFiles/minimal")
         self.assertEqual(C.configured, True)

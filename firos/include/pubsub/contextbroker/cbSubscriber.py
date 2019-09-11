@@ -23,16 +23,23 @@ __status__ = "Developement"
 import time
 import requests
 import json
+import threading
 try:
     # Python 3
     import _thread as thread
+    from http.server import BaseHTTPRequestHandler
+    from http.server import HTTPServer
 except ImportError:
     # Pyrhon 2
     import thread
+    from BaseHTTPServer import BaseHTTPRequestHandler
+    from BaseHTTPServer import HTTPServer
 
 from include.constants import Constants as C
 from include.logger import Log
 from include.pubsub.genericPubSub import Subscriber
+from include.ros.topicHandler import RosTopicHandler
+from include.FiwareObjectConverter.objectFiwareConverter import ObjectFiwareConverter
 
 
 
@@ -56,19 +63,89 @@ class CbSubscriber(Subscriber):
     subscriptionIds = {}
     CB_BASE_URL = None
     FIROS_NOTIFY_URL = None
+
     def __init__(self):
-        ''' Lazy Initialization of CB_BASE_URL and FIROS_NOTIFY_URL
+        ''' 
+            Lazy Initialization of CB_BASE_URL and FIROS_NOTIFY_URL
+            and setting up Configuration-Parameters
         '''
-        self.CB_BASE_URL = "http://{}:{}".format(C.CONTEXTBROKER_ADRESS, C.CONTEXTBROKER_PORT)
-        self.FIROS_NOTIFY_URL = "http://{}:{}/firos".format(C.MAP_SERVER_ADRESS, C.MAP_SERVER_PORT)
+        # Do nothing if no Configuration is provided!
+        if self.configData is None:
+            Log("WARNING", "No Configuration for Context-Broker found!")
+            self.noConf = True
+            return
+        else:
+            self.noConf = False
+
+        ## Set Configuration
+        data = self.configData
+
+        if data is not None and "address" not in data or "port" not in data:
+            raise Exception("No Context-Broker specified!")
+
+        if "subscription" not in data:
+            data["subscription"] = dict(throttling=0, subscription_length=300, subscription_refresh_delay=0.9)
+
+        if "throttling" not in data["subscription"]:
+            data["subscription"]["throttling"] = 0
+        else: 
+            data["subscription"]["throttling"] = int(data["subscription"]["throttling"])
+
+        if "subscription_length" not in data["subscription"]:
+            data["subscription"]["subscription_length"] = 300
+        else:
+            data["subscription"]["subscription_length"] = int(data["subscription"]["subscription_length"])
+
+        if "subscription_refresh_delay" not in data["subscription"]:
+            data["subscription"]["subscription_refresh_delay"] = 0.9
+        else:
+            data["subscription"]["subscription_refresh_delay"] = float(data["subscription"]["subscription_refresh_delay"])
+
+
+        self.data = data
+        self.serverIsRunning = False
+        self.CB_BASE_URL = "http://{}:{}".format(data["address"], data["port"])
 
 
     def subscribe(self, robotID, topicList, msgDefintions):
-        ''' This method starts for each topic an own thread, which handles the subscription
-
-            robotID: The string of the robotID
+        ''' robotID: The string of the robotID
             topicList: A list of topics, corresponding to the robotID
+            msgDefintions: The Messages-Definitions from ROS
+
+            This method only gets called once (or multiple times, if we get a reset!)! So we need to make sure, that in this file
+            'RosTopicHandler.publish' is called somehow independently after some Signal arrived (from elsewhere).
+
+            Keep in mind that Firos can get a Reset-Signal, in this case, this method is called again. Make sure that this method can get called 
+            multiple times!
+
+            In this Context-Broker-Subscriber we spawn ONE HTTP-Base-Server in another Thread, which will be used, 
+            so that the Context-Broker can notify us after it received a Message. 
+
+            In addition to that, the Context-Broker needs to know how to notify us. This is solved by adding subscriptions into 
+            the Context-Broker, which we need to manually maintain. Again we start a Thread for each Topic which handles the Subscriptions
+
+
+
+            So After everything is set up that, Firos can be notified, explicitly here the method:
+            """CBServer.CBHandler.do_post""" is invoked. This method handles the Conversion back into a conform ROS-Message.
+
+            After we did the Conversion, we simply need to call  """RosTopicHandler.publish"""
+
+
         '''
+        # Do nothing if no Configuratuion
+        if self.noConf:
+            return
+        
+        ### Start the HTTPServer and wait until it is ready!
+        if not self.serverIsRunning:
+            server_ready = threading.Event()
+            self.server = CBServer(server_ready)
+            thread.start_new_thread(self.server.start, ())
+            self.serverIsRunning = True
+            server_ready.wait()
+
+
         # If not already subscribed, start a new thread which handles the subscription for each topic for an robot.
         # And only If the topic list is not empty!
         if robotID not in self.subscriptionIds and topicList:
@@ -79,16 +156,32 @@ class CbSubscriber(Subscriber):
 
 
     def unsubscribe(self):
-        ''' Simply unsubscribed from all tracked subscriptions
+        ''' 
+            Simply unsubscribed from all tracked subscriptions
+            and also stop the HTTP-Server
         '''
+        # Do nothing if no Configuratuion
+        if self.noConf:
+            return
+
+        # close HTTP-Server
+        self.server.close()
+
+        # Unsubscribe to all Topics
         for robotID in self.subscriptionIds:
             for topic in self.subscriptionIds[robotID]:
                 response = requests.delete(self.CB_BASE_URL + self.subscriptionIds[robotID][topic])
                 self._checkResponse(response, subID=self.subscriptionIds[robotID][topic])
 
 
+
+    ####################################################
+    ########## Helpful Classes and Methods #############
+    ####################################################
+
     def subscribeThread(self, robotID, topic):
-        ''' A Subscription-Thread. It Life-Cycle is as follows:
+        ''' 
+            A Subscription-Thread. Its Life-Cycle is as follows:
             -> Subscribe -> Delete old Subs-ID -> Save new Subs-ID -> Wait ->
 
             robotID: A string corresponding to the robotID
@@ -114,13 +207,14 @@ class CbSubscriber(Subscriber):
             self.subscriptionIds[robotID][topic] = newSubID
 
             # Wait
-            time.sleep(int(C.CB_SUB_LENGTH * C.CB_SUB_REFRESH)) # sleep Length * Refresh-Rate (where 0 < Refresh-Rate < 1)
+            time.sleep(int(self.data["subscription"]["subscription_length"] * self.data["subscription"]["subscription_refresh_delay"])) # sleep Length * Refresh-Rate (where 0 < Refresh-Rate < 1)
             Log("INFO", "Refreshing Subscription for " + robotID + " and topic: " + str(topic))
 
 
     def subscribeJSONGenerator(self, robotID, topic):
-        ''' This method returns the correct JSON-format to subscribe to the ContextBroker. 
-            The Expiration-Date/Throttle and Type of robots is retreived here via configuration
+        ''' 
+            This method returns the correct JSON-format to subscribe to the ContextBroker. 
+            The Expiration-Date/Throttle and Type of robots is retreived here via the configuration we got
 
             robotID: The String of the Robot-Id.
             topic: The actual topic to subscribe to.
@@ -141,18 +235,19 @@ class CbSubscriber(Subscriber):
             },
             "notification": {
             "http": {
-                "url": self.FIROS_NOTIFY_URL 
+                "url": "http://{}:{}".format(C.MAP_SERVER_ADRESS, self.server.port)
             },
             "attrs": [str(topic)]
             },
-            "expires": time.strftime("%Y-%m-%dT%H:%M:%S.00Z", time.gmtime(time.time() + C.CB_SUB_LENGTH)), # ISO 8601
-            "throttling": C.CB_THROTTLING  
+            "expires": time.strftime("%Y-%m-%dT%H:%M:%S.00Z", time.gmtime(time.time() + self.data["subscription"]["subscription_length"])), # ISO 8601
+            "throttling": self.data["subscription"]["throttling"]  
             }
         return json.dumps(struct)
 
 
     def _checkResponse(self, response, robTop=None, subID=None, created=False):
-        ''' If a not good response from ContextBroker is received, the error will be printed.
+        ''' 
+            If a not good response from ContextBroker is received, the error will be printed.
     
             response: The response from ContextBroker
             robTop:   A string Tuple (robotId, topic), for the curretn robot/topic
@@ -166,3 +261,130 @@ class CbSubscriber(Subscriber):
             else:
                 Log("WARNING", "Could not delete subscription {} from Context-Broker :".format(subID))
                 Log("WARNING", response.content)
+
+
+
+
+
+class CBServer:
+    '''
+        This is the HTTPServer, which start listening on an adress and a free port
+        Here we provide 3 methods: Initialize, start and stop. Start and stop either 
+        start or stop this Server.
+    '''
+    def __init__(self, thread_event):
+        '''
+            Set up HTTPServer
+            thread_event: The Event where the main Thread waits on
+        '''
+        self.stopped = False
+        self.thread_event = thread_event
+
+        Protocol = "HTTP/1.0"
+
+        server_address = ("0.0.0.0", 0)
+
+        self.CBHandler.protocol_version = Protocol
+        self.httpd = HTTPServer(server_address, self.CBHandler)
+
+    def start(self):
+        '''
+            This start the HTTPServer and notifies thread_event
+        '''
+        # Get Port and HostName and save port
+        sa = self.httpd.socket.getsockname()
+        self.port = sa[1]
+        Log("INFO", "\nListening for Context-Broker-Messages on: ", C.MAP_SERVER_ADRESS, ":", sa[1])
+
+        # Notify and start handling Requests
+        self.thread_event.set()
+        while not self.stopped:
+            self.httpd.handle_request()
+
+    def close(self):
+        '''
+            Stops the HTTPServer
+        '''
+        self.stopped = True
+
+    class CBHandler(BaseHTTPRequestHandler):
+        ''' This is the FIROS-HTTP-Request-Handler. It is needed,
+            because the ContextBroker sends Information about the
+            subscriptions via HTTP. This Class just handles incoming 
+            Requests and converts the received Data into a ROS-conform Messag.
+            in """do_POST""" we invoke """RosTopicHandler.publish"""
+        '''
+
+
+        def do_GET(self):
+            '''
+                We do not respond to GETs. We do Nothing!!
+            '''
+            pass
+
+
+        def do_POST(self):
+            ''' The ContextBroker is informing us via one of our subscriptions.
+                We convert the received content back and publish 
+                it in ROS.
+
+                self: The "request" from the Context-Broker
+
+                we invoke """RosTopicHandler.publish""" here!
+            '''
+            # retreive Data and get the updated information
+            recData = self.rfile.read(int(self.headers['Content-Length']))
+            receivedData = json.loads(recData)
+            data = receivedData['data'][0] # Specific to NGSIv2 
+            jsonData = json.dumps(data)
+            topics = data.keys() # Convention Topic-Names are the attributes by an JSON Object, except: type, id
+
+            # iterate through every 'topic', since we only receive updates from one topic
+            # Only id, type and 'topicname' are present
+            for topic in topics:
+                if topic != 'id' and topic != 'type':
+                    dataStruct = self._buildTypeStruct(data[topic])
+
+                    # Convert Back into a Python-Object
+                    obj = self.TypeValue()
+                    ObjectFiwareConverter.fiware2Obj(jsonData, obj, setAttr=True, useMetaData=False)
+                    # Publish in ROS
+                    RosTopicHandler.publish(data['id'], topic, getattr(obj, topic), dataStruct)
+
+            # Send OK!
+            self.send_response(204)
+
+
+        ### Back Conversion From Entity-JSON into Python-Object
+        def _buildTypeStruct(self, obj):
+            ''' This generates a struct containing a type (the actual ROS-Message-Type) and 
+                its value (either empty or more ROS-Message-Types).
+
+                This struct is used later to recursivley load needed Messages and fill them with 
+                content before they are posted back to ROS.
+
+                obj:    The received update from Context-Broker
+            '''
+            s = {}
+
+            # Searching for a point to get ROS-Message-Types from the obj, see Fiware-Object-Converter
+            if 'value' in obj and 'type' in obj and "." in obj['type'] : 
+                s['type'] = obj['type']
+                objval = obj['value'] 
+                s['value'] = {}
+
+                # For each value in Object repeat!
+                for k in objval:
+                    if 'type' in objval[k] and 'value' in objval[k] and objval[k]['type'] == 'array': # Check if we got an Array-Type value
+                        l = []
+                        for klist in objval[k]['value']:
+                            l.append(self._buildTypeStruct(klist))
+                        s['value'][k] = l
+                    else:
+                        s['value'][k] = self._buildTypeStruct(objval[k])
+
+            return s
+
+        class TypeValue(object):
+            ''' A Stub-Object to parse the received data
+            '''

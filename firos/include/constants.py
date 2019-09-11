@@ -27,6 +27,7 @@ except ImportError:
 class Constants:
     configured = False
     PATH = None
+    DATA = None
     # All Constants with their default value!
     LOGLEVEL = "INFO"
     INTERFACE = "public"
@@ -34,12 +35,6 @@ class Constants:
     MAP_SERVER_ADRESS = None
     MAP_SERVER_PORT = 10100
     ROSBRIDGE_PORT = 9090
-    CONTEXTBROKER_ADRESS = None
-    CONTEXTBROKER_PORT = None
-
-    CB_THROTTLING = 0
-    CB_SUB_LENGTH = 300             # In Seconds!
-    CB_SUB_REFRESH = 0.9            # After 90% of time is exceeded
     CONTEXT_TYPE = "ROBOT"   
     PUB_FREQUENCY = 0               # In Milliseconds
 
@@ -61,6 +56,7 @@ class Constants:
             cls.PATH = path
 
             configData = cls.setConfiguration(path)
+            cls.DATA = configData
 
             if "interface" in configData:
                 cls.INTERFACE = configData["interface"]
@@ -70,12 +66,6 @@ class Constants:
 
             if "server" in configData and "port" in configData["server"]:
                cls. MAP_SERVER_PORT = configData["server"]["port"]
-
-            try:
-                cls.CONTEXTBROKER_ADRESS = configData["contextbroker"]["address"]
-                cls.CONTEXTBROKER_PORT = configData["contextbroker"]["port"]
-            except:
-                raise Exception("No Context-Broker specified!")
 
             if "node_name" in configData:
                 cls.ROS_NODE_NAME = configData["node_name"]
@@ -98,22 +88,3 @@ class Constants:
 
             if "pub_frequency" in configData:
                 cls.PUB_FREQUENCY = int(configData["pub_frequency"])
-
-
-
-            ### ContextBroker Section
-            if "contextbroker" in configData and "subscription" in configData["contextbroker"]:
-                # Configuration for Subscription
-                subConfig = configData["contextbroker"]["subscription"]
-                if "throttling" in subConfig:
-                    cls.CB_THROTTLING = int(subConfig["throttling"])
-                
-                if "subscription_length" in subConfig:
-                    cls.CB_SUB_LENGTH = int(subConfig["subscription_length"])
-                
-                if "subscription_refresh_delay" in subConfig:
-                    cls.CB_SUB_REFRESH = float(subConfig["subscription_refresh_delay"])
-
-
-
-

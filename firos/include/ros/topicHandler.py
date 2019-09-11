@@ -36,9 +36,6 @@ from include.pubsub.genericPubSub import PubSub
 # this Message is needed, for the Listeners on connect on disconnect
 import std_msgs.msg
 
-# TODO DL see loadMsgHandlers
-TOPIC_BASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "topics")
-
 # Structs whith robotID and each robotID with a topic: 
 # ROS_PUBSUB[robotID][topic] --> returns  rospy Publisher/Subsriber
 ROS_PUBLISHER = {}

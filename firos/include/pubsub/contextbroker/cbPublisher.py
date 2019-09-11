@@ -39,7 +39,9 @@ class CbPublisher(Publisher):
 
         Also the rawMsg is converted here via the Object Converter
 
-        THIS IS THE ONLY FILE WHICH OPERATES ON /v2/entities 
+        THIS IS THE ONLY FILE WHICH OPERATES ON /v2/entities
+
+        Also this Method is called, after FIROS received a Message 
     '''
 
     # Keeps track of the posted Content on the ContextBroker
@@ -51,8 +53,26 @@ class CbPublisher(Publisher):
 
     def __init__(self):
         ''' Lazy Initialization of CB_BASE_URL
+            And set up the configuration via the config we received
+
+            If No configuration is provided, we simply do nothing
         '''
-        self.CB_BASE_URL = "http://{}:{}/v2/entities/".format(C.CONTEXTBROKER_ADRESS, C.CONTEXTBROKER_PORT)
+        # Do nothing if no Configuration is provided!
+        if self.configData is None:
+            Log("WARNING", "No Configuration for Context-Broker found!")
+            self.noConf = True
+            return
+        else:
+            self.noConf = False
+
+        ## Set Configuration
+        data = self.configData
+        if "address" not in data or "port" not in data: 
+            raise Exception("No Context-Broker specified!")
+
+        self.data = data
+        self.CB_BASE_URL = "http://{}:{}/v2/entities/".format(data["address"], data["port"])
+
 
     def publish(self, robotID, topic, rawMsg, msgDefintionDict):
         ''' This is the actual publish-Routine which updates and creates Entities on the
@@ -61,11 +81,18 @@ class CbPublisher(Publisher):
             robotID: A string corresponding to the Robot-Id
             topic:   Also a string, corresponding to the topic of the robot
             rawMsg:  the raw data directly obtained from rospy
-            msgDefintionDict: The Definition as obtained FROM ros2Definition TODO DL 
+            msgDefintionDict: The Definition as obtained directly from ROS-Messages
+
+            We do not need to invoke something special here. This method gets called automatically,
+            after Firos received a Message from the ROS-World
 
             TODO DL During Runtime an Entitiy might get deleted, check it here!
-            TODO DL set publish frequency
         '''
+        # Do nothing if no Configuratuion
+        if self.noConf:
+            return
+
+
         # if struct not initilized, intitilize it even on ContextBroker!
         if robotID not in self.posted_history:
             self.posted_history[robotID] = {}
@@ -112,7 +139,9 @@ class CbPublisher(Publisher):
 
 
     def unpublish(self):
-        ''' Removes all previously tracked Entities/Robots on ContextBroker
+        ''' 
+            Removes all previously tracked Entities/Robots on ContextBroker
+            This method also gets automaticall called, someone sent Firos the Shutdown Signal
         '''
         for robotID in self.posted_history:
             response = requests.delete(self.CB_BASE_URL + robotID)
@@ -120,8 +149,10 @@ class CbPublisher(Publisher):
         
         
     def _loadDescriptions(self, robotID):
-        ''' Simply load the descriptions from the 'robotdescriptions.json'-file and 
-            return its value
+        ''' This simply load the descriptions from the 'robotdescriptions.json'-file and 
+            return its value. We publish the data contained also onto the ContextBroker
+
+            (It is not necessary!)
 
             robotID: The Robot-Id-String
         '''

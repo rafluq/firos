@@ -19,7 +19,7 @@ try:
     # Python 3
     from http.server import HTTPServer
 except ImportError:
-    # Pyrhon 2
+    # Python 2
     from BaseHTTPServer import HTTPServer
 
 from include.logger import Log

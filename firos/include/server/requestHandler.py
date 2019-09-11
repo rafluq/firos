@@ -46,9 +46,8 @@ from include.FiwareObjectConverter.objectFiwareConverter import ObjectFiwareConv
 
 class RequestHandler(BaseHTTPRequestHandler):
     ''' This is the FIROS-HTTP-Request-Handler. It is needed,
-        because the ContextBroker sends Information about the
-        subscriptions via HTTP. This Class just handles incoming 
-        Requests and deligates them further to the specific. Firos
+        because we offer some functionality via Firos. This Class just handles incoming 
+        Requests and deligates them further to the specific ones. Firos
         allows some extra operations here like Connect and Disconnect.
     '''
     def do_GET(self):
@@ -105,34 +104,6 @@ def getAction(path, method):
 ###############################################################################
 #############################   Request Mapping   #############################
 ###############################################################################
-
-
-def requestFromCB(request, action):
-    ''' The ContextBroker is informing us via one of our subscriptions.
-        We convert the received content back and publish 
-        it in ROS.
-
-        request: The request from Context-Broker
-        action: Here it is unused
-    '''
-    # retreive Data and get the updated information
-    receivedData = getPostParams(request)
-    data = receivedData['data'][0] # Specific to NGSIv2 
-    jsonData = json.dumps(data)
-    topics = data.keys() # Convention Topic-Names are the attributes by an JSON Object, except: type, id
-
-    # iterate through every 'topic', since we only receive updates from one topic
-    # Only id, type and 'topicname' are present
-    for topic in topics:
-        if topic != 'id' and topic != 'type':
-            dataStruct = buildTypeStruct(data[topic])
-            obj = convertReceivedDataFromCB(jsonData)
-            # Publish in ROS
-            RosTopicHandler.publish(data['id'], topic, getattr(obj, topic), dataStruct)
-
-    # Send OK!
-    request.send_response(204)
-
 
 def listRobots(request, action):
     ''' Generates a list of all robots (depending on RosConfigurator, confManager)
@@ -260,7 +231,7 @@ MAPPER = {
         {"regexp": "^/robots/*$", "action": listRobots},
         {"regexp": "^/robot/.*$", "action": onRobotData}],
     "POST": [
-        {"regexp": "^/firos/*$", "action": requestFromCB},
+        # {"regexp": "^/firos/*$", "action": requestFromCB},
         {"regexp": "^/robot/connect/*$", "action": onConnect},
         {"regexp": "^/robot/disconnect/(\w+)/*$", "action": onDisConnect},
         {"regexp": "^/whitelist/write/*$", "action": onWhitelistWrite},
@@ -281,52 +252,3 @@ def end_request(request, header, status, content):
         request.wfile.write(bytes(content, "utf-8"))
     else:
         request.wfile.write(bytes(content))
-
-
-### Back Conversion From Entity-JSON into Python-Object
-def buildTypeStruct(obj):
-    ''' This generates a struct containing a type (the actual ROS-Message-Type) and 
-        its value (either empty or more ROS-Message-Types).
-
-        This struct is used later to recursivley load needed Messages and fill them with 
-        content before they are posted back to ROS.
-
-        obj:    The received update from Context-Broker
-    '''
-    s = {}
-
-    # Searching for a point to get ROS-Message-Types from the obj, see Fiware-Object-Converter
-    if 'value' in obj and 'type' in obj and "." in obj['type'] : 
-        s['type'] = obj['type']
-        objval = obj['value'] 
-        s['value'] = {}
-
-        # For each value in Object repeat!
-        for k in objval:
-            if 'type' in objval[k] and 'value' in objval[k] and objval[k]['type'] == 'array': # Check if we got an Array-Type value
-                l = []
-                for klist in objval[k]['value']:
-                    l.append(buildTypeStruct(klist))
-                s['value'][k] = l
-            else:
-                s['value'][k] = buildTypeStruct(objval[k])
-
-    return s
-
-
-def convertReceivedDataFromCB(jsonData):
-    ''' This parses the Input Back into a TypeValue-object via the 
-        Object-Converter. This method is here to uniform the Obejct-Conversions 
-        in Publisher and Subscriber
-
-        topic:    The topic, which should be converted. 
-                    the topic should have "id", "type" and "TOPIC" in it
-    '''
-    kv = TypeValue()
-    ObjectFiwareConverter.fiware2Obj(jsonData, kv, setAttr=True, useMetaData=False)
-
-    return kv
-
-class TypeValue(object):
-    ''' A Stub-Object to parse the received data
-    '''
