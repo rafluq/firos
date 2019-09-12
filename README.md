@@ -3,7 +3,7 @@
 [![FIWARE Robotics](https://nexus.lab.fiware.org/static/badges/chapters/robotics.svg)](https://www.fiware.org/developers/catalogue/)
 [![License: MIT](https://img.shields.io/github/license/iml130/firos.svg)](https://opensource.org/licenses/MIT)<!--[![Docker badge](https://img.shields.io/docker/pulls/fiware/sigfox-iotagent.svg)](https://hub.docker.com/r/fiware/firos/)-->
 [![](https://img.shields.io/badge/tag-firos-orange.svg?logo=stackoverflow)](https://stackoverflow.com/questions/tagged/fiware+ros)
-<br/> [![Documentation badge](https://img.shields.io/readthedocs/firos.svg)](https://firos.rtfd.io)
+<br/> [![Documentation badge](https://img.shields.io/readthedocs/firos.svg)](https://firos.readthedocs.io)
 [![Build Status](https://travis-ci.com/iml130/firos.svg?branch=master)](https://travis-ci.com/iml130/firos)<!--
 [![Coverage Status](https://coveralls.io/repos/github/iml130/firos/badge.svg?branch=master)](https://coveralls.io/github/iml130/firos?branch=master)-->
 ![Status](https://nexus.lab.fiware.org/repository/raw/public/badges/statuses/incubating.svg)
@@ -26,8 +26,8 @@ This project is a fork from the **outdated** [Ikergunes FIROS package](https://g
 This project is part of [FIWARE](https://www.fiware.org/). For more information check the FIWARE Catalogue entry for the
 [Robotics](https://github.com/Fiware/catalogue/tree/master/robotics).
 
-| :books: [Documentation](https://firos.rtfd.io) | :dart: [Roadmap](doc/roadmap.md) |
-| ---------------------------------------------- | -------------------------------- |
+| :books: [Documentation](https://firos.readthedocs.io) | :dart: [Roadmap](doc/roadmap.md) |
+| ----------------------------------------------------- | -------------------------------- |
 
 
 ## Contents
@@ -68,5 +68,5 @@ FIROS-Helping Robots to be Context Aware
 28.11.2018 FIWARE Global Summit, Malaga)
 
 FIROS-Helping Robots to be Context Aware II
-([Slideshare](https://de.slideshare.net/FI-WARE/fiware-global-summit-firos-making-robots-context-aware),
-21.05.2019 FIWARE Global Summit, Genova)
+([Slideshare](https://de.slideshare.net/FI-WARE/fiware-global-summit-firos-making-robots-context-aware), 21.05.2019
+FIWARE Global Summit, Genova)
