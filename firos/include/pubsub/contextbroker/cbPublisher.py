@@ -27,18 +27,21 @@ import os
 from include.logger import Log
 from include.constants import Constants as C
 from include.FiwareObjectConverter.objectFiwareConverter import ObjectFiwareConverter
+from include.pubsub.genericPubSub import Publisher
 
 
 
 
-class CbPublisher(object):
+class CbPublisher(Publisher):
     ''' The CbPublisher handles the Enities on CONTEXT_BROKER / v2 / entities .
         It creates not creaed Entities and updates their attributes via 'publishToCB'.
         On Shutdown the tracked Entities are deleted. 
 
         Also the rawMsg is converted here via the Object Converter
 
-        THIS IS THE ONLY FILE WHICH OPERATES ON /v2/entities 
+        THIS IS THE ONLY FILE WHICH OPERATES ON /v2/entities
+
+        Also this Method is called, after FIROS received a Message 
     '''
 
     # Keeps track of the posted Content on the ContextBroker
@@ -50,21 +53,46 @@ class CbPublisher(object):
 
     def __init__(self):
         ''' Lazy Initialization of CB_BASE_URL
-        '''
-        self.CB_BASE_URL = "http://{}:{}/v2/entities/".format(C.CONTEXTBROKER_ADRESS, C.CONTEXTBROKER_PORT)
+            And set up the configuration via the config we received
 
-    def publishToCB(self, robotID, topic, rawMsg, msgDefintionDict):
+            If No configuration is provided, we simply do nothing
+        '''
+        # Do nothing if no Configuration is provided!
+        if self.configData is None:
+            Log("WARNING", "No Configuration for Context-Broker found!")
+            self.noConf = True
+            return
+        else:
+            self.noConf = False
+
+        ## Set Configuration
+        data = self.configData
+        if "address" not in data or "port" not in data: 
+            raise Exception("No Context-Broker specified!")
+
+        self.data = data
+        self.CB_BASE_URL = "http://{}:{}/v2/entities/".format(data["address"], data["port"])
+
+
+    def publish(self, robotID, topic, rawMsg, msgDefintionDict):
         ''' This is the actual publish-Routine which updates and creates Entities on the
             ContextBroker. It also keeps track via posted_history on already posted entities and topics
 
             robotID: A string corresponding to the Robot-Id
             topic:   Also a string, corresponding to the topic of the robot
             rawMsg:  the raw data directly obtained from rospy
-            msgDefintionDict: The Definition as obtained FROM ros2Definition TODO DL 
+            msgDefintionDict: The Definition as obtained directly from ROS-Messages
+
+            We do not need to invoke something special here. This method gets called automatically,
+            after Firos received a Message from the ROS-World
 
             TODO DL During Runtime an Entitiy might get deleted, check it here!
-            TODO DL set publish frequency
         '''
+        # Do nothing if no Configuratuion
+        if self.noConf:
+            return
+
+
         # if struct not initilized, intitilize it even on ContextBroker!
         if robotID not in self.posted_history:
             self.posted_history[robotID] = {}
@@ -82,7 +110,7 @@ class CbPublisher(object):
         if 'descriptions' not in self.posted_history[robotID]:
             self.posted_history[robotID]['descriptions'] = self._loadDescriptions(robotID)
             if self.posted_history[robotID]['descriptions'] is not None:
-                self.publishToCB(robotID, 'descriptions', self.posted_history[robotID]['descriptions'], None)
+                self.publish(robotID, 'descriptions', self.posted_history[robotID]['descriptions'], None)
 
         # check if previous posted topic type is the same, iff not, we do not post it to the context broker
         if (self.posted_history[robotID][topic] != {} and topic != "descriptions"  
@@ -94,9 +122,11 @@ class CbPublisher(object):
         # Replace previous rawMsg with current one
         self.posted_history[robotID][topic] = rawMsg
         
-        # Set Definition-Dict
-        self.definitionDict[topic] = msgDefintionDict
-        completeJsonStr = ObjectFiwareConverter.obj2Fiware(self.posted_history[robotID], ind=0, dataTypeDict=self.definitionDict,  ignorePythonMetaData=True) 
+        # Set Definition-Dict if not set
+        if msgDefintionDict is None:
+            msgDefintionDict = {}
+        # Convert rawMsg 
+        completeJsonStr = ObjectFiwareConverter.obj2Fiware(self.posted_history[robotID], ind=0, dataTypeDict=msgDefintionDict,  ignorePythonMetaData=True) 
 
         # format json, so that the contextbroker accepts it.
         partJsonStr =  json.dumps({
@@ -109,8 +139,10 @@ class CbPublisher(object):
         self._responseCheck(response, attrAction=1, topEnt=topic)
 
 
-    def unpublishALLFromCB(self):
-        ''' Removes all previously tracked Entities/Robots on ContextBroker
+    def unpublish(self):
+        ''' 
+            Removes all previously tracked Entities/Robots on ContextBroker
+            This method also gets automaticall called, someone sent Firos the Shutdown Signal
         '''
         for robotID in self.posted_history:
             response = requests.delete(self.CB_BASE_URL + robotID)
@@ -118,8 +150,10 @@ class CbPublisher(object):
         
         
     def _loadDescriptions(self, robotID):
-        ''' Simply load the descriptions from the 'robotdescriptions.json'-file and 
-            return its value
+        ''' This simply load the descriptions from the 'robotdescriptions.json'-file and 
+            return its value. We publish the data contained also onto the ContextBroker
+
+            (It is not necessary!)
 
             robotID: The Robot-Id-String
         '''

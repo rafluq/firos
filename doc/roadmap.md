@@ -18,8 +18,6 @@ the product planned for **April 2019**:
 
 -   Initial onboarding of Firos Documentation
 
--   Basic Documentation
-
 ## Medium term
 
 The following list of features are planned to be addressed in the medium term, typically within the subsequent

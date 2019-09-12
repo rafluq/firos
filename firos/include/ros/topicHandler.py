@@ -31,18 +31,15 @@ from include.libLoader import LibLoader
 from include import confManager
 
 # PubSub Handlers
-from include.contextbroker.cbPublisher import CbPublisher
-from include.contextbroker.cbSubscriber import CbSubscriber
+from include.pubsub.genericPubSub import PubSub
 
 # this Message is needed, for the Listeners on connect on disconnect
 import std_msgs.msg
 
-# TODO DL see loadMsgHandlers
-TOPIC_BASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "topics")
-
 # Structs whith robotID and each robotID with a topic: 
 # ROS_PUBSUB[robotID][topic] --> returns  rospy Publisher/Subsriber
 ROS_PUBLISHER = {}
+ROS_SUBSCRIBER_LAST_MESSAGE = {}
 ROS_SUBSCRIBER = {}
 
 # A Struct which is used to minimize the Number of publishes. Here we only
@@ -65,14 +62,11 @@ ROS_MESSAGE_CLASSES = {}
 # If shutdown is signaled, do stop posting ROS-Messages to the ContextBroker
 SHUTDOWN_SIGNAL = False
 
-
-CloudSubscriber = None
-CloudPublisher = None
+CloudPubSub = None
 
 def initPubAndSub():
-    global CloudPublisher, CloudSubscriber
-    CloudSubscriber = CbSubscriber()
-    CloudPublisher = CbPublisher()
+    global CloudPubSub
+    CloudPubSub = PubSub()
 
 def loadMsgHandlers(robot_data):
     ''' This method initializes The Publisher and Subscriber for ROS and 
@@ -119,19 +113,21 @@ def loadMsgHandlers(robot_data):
                 # Case it is a subscriber, add it in subscribers
                 if robotID not in ROS_SUBSCRIBER:
                     ROS_SUBSCRIBER[robotID] = {}
+                    ROS_SUBSCRIBER_LAST_MESSAGE[robotID] = {}
                     
                 additionalArgsCallback = {"robot": robotID, "topic": topic} # Add addtional Infos about topic and robotID 
                 ROS_SUBSCRIBER[robotID][topic] = rospy.Subscriber(robotID + "/" + topic, theclass, _publishToCBRoutine, additionalArgsCallback)
+                ROS_SUBSCRIBER_LAST_MESSAGE[robotID][topic] = None # No message currently published
             else:
                 # Case it is a publisher, add it in publishers
                 if robotID not in ROS_PUBLISHER:
                     ROS_PUBLISHER[robotID] = {}
-
+                    
                 ROS_PUBLISHER[robotID][topic] = rospy.Publisher(robotID + "/" + topic, theclass, queue_size=C.ROS_SUB_QUEUE_SIZE, latch=True)
 
         # After initializing ROS-PUB/SUBs, intitialize ContextBroker-Subscriber based on ROS-Publishers for each robot
         if robotID in ROS_PUBLISHER:
-            CloudSubscriber.subscribeToCB(str(robotID), ROS_PUBLISHER[robotID].keys())
+            CloudPubSub.subscribe(str(robotID), ROS_PUBLISHER[robotID].keys(), ROS_TOPIC_AS_DICT)
             Log("INFO", "\n")
             Log("INFO", "Subscribed to " + robotID + "'s topics\n")
 
@@ -148,14 +144,15 @@ def _publishToCBRoutine(data, args):
     '''
     if not SHUTDOWN_SIGNAL:
         robot = args['robot']
-        topic = args['topic'] # Retreiving additional Infos, which were set on initialization
+        topic = args['topic'] # Retreiving additional Infos, which were set on initialization 
          
         t = time.time() * 1000 # Get Millis
         if (robot+topic) in LAST_PUBLISH_TIME and LAST_PUBLISH_TIME[robot+topic] >= t:
             # Case: We want it to publish again, but we did not wait PUB_FREQUENCY milliseconds
             return 
 
-        CloudPublisher.publishToCB(robot, topic, data, ROS_TOPIC_AS_DICT[topic])
+        CloudPubSub.publish(robot, topic, data, ROS_TOPIC_AS_DICT)
+        ROS_SUBSCRIBER_LAST_MESSAGE[robot][topic] = data
         LAST_PUBLISH_TIME[robot+topic] = t + C.PUB_FREQUENCY
 
 
@@ -175,7 +172,7 @@ class RosTopicHandler:
 
             robotID: The Robot-Id
             topic: The topic to be published
-            convertedData: the converted data from the cbSubscriber
+            convertedData: the converted data from the Subscriber
             dataStruct: The struct of convertedData, specified by their types
         '''
         if robotID in ROS_PUBLISHER and topic in ROS_PUBLISHER[robotID]:
@@ -183,7 +180,7 @@ class RosTopicHandler:
                 # check if a publisher to this robotID and topic is set 
                 # then check the received and expected type to be equal
                 # Iff, then publish received message to ROS
-                newMsg = instantiateROSMessage(convertedData, dataStruct)     
+                newMsg = instantiateROSMessage(convertedData, dataStruct)
                 ROS_PUBLISHER[robotID][topic].publish(newMsg)
 
 
@@ -197,8 +194,8 @@ class RosTopicHandler:
         '''
         SHUTDOWN_SIGNAL = True
 
-        CloudSubscriber.unsubscribeALLFromCB()
-        CloudPublisher.unpublishALLFromCB()
+        CloudPubSub.unsubscribe()
+        CloudPubSub.unpublish()
 
         Log("INFO", "Unsubscribing topics...")
         for subscriber in subscribers:

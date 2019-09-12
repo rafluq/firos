@@ -18,12 +18,15 @@ jobs:
       python: "2.7"
       cache: pip
 
+      before_install:
+        - git submodule update --init --recursive
+
       install:
         - pip install -r requirements.txt
 
       script:
-        - true
-      #  - python tests.py
+        - export PYTHONPATH="${PYTHONPATH}:${TRAVIS_BUILD_DIR}/firos/include/FiwareObjectConverter"
+        - cd firos && python -m unittest discover
 
 
     - stage: test

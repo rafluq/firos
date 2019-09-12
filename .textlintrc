@@ -102,7 +102,7 @@
         ["auto[- ]complete", "autocomplete"],
         ["auto[- ]format", "autoformat"],
         ["auto[- ]fix", "autofix"],
-        ["auto[- ]fixing", "autofixing"],
+        ["auto[- ]fixing", "autofixinlint  'README.md' 'doc/*.md'  'doc/**/*.mdg"],
         ["back[- ]end(\\w*)", "backend$1"],
         ["bug[- ]fix(es?)", "bugfix$1"],
         ["check[- ]box(es?)", "checkbox$1"],
@@ -187,11 +187,7 @@
     },
     "no-dead-link": {
        "ignoreRedirects": true,
-       "ignore": [
-          "mailto:*",
-          "https://www.fi-xifi.eu/about-xifi/what-is-xifi.html",
-		  "http://www.fp7-ofelia.eu/"          
-      ]
+       "ignore": [ "https://firos.docs.apiary.io/" ]
     }
   }
 }

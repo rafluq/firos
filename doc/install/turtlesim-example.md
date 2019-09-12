@@ -1,4 +1,4 @@
-# FIROS with Turtlesim
+# FIROS with Turtlesim and Orion Context-Broker
 
 We will quickly set up a running example of FIROS with the `turtlesim_node`. It is expected, that you already have
 installed ROS, turtlesim, a functional Orion Context Broker and followed the Installation instruction explained in the
@@ -39,7 +39,8 @@ Before executing any commands you need to create two configuration folders. In t
 ```
 
 **NOTE** `config.json`: In this case, the interface we use (which we retreived via `ip link`) is `"enp0s31f6"`. The
-Context-Broker runs locally, so this should be fine for you, as long as your Context-Broker is also locally.
+Context-Broker runs locally, so the configuration should be fine for you, as long as your Context-Broker is also
+locally.
 
 Inside `config_1` we add the file `robots.json` with the following content:
 
