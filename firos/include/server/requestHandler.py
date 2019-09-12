@@ -231,7 +231,6 @@ MAPPER = {
         {"regexp": "^/robots/*$", "action": listRobots},
         {"regexp": "^/robot/.*$", "action": onRobotData}],
     "POST": [
-        # {"regexp": "^/firos/*$", "action": requestFromCB},
         {"regexp": "^/robot/connect/*$", "action": onConnect},
         {"regexp": "^/robot/disconnect/(\w+)/*$", "action": onDisConnect},
         {"regexp": "^/whitelist/write/*$", "action": onWhitelistWrite},

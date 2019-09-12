@@ -26,7 +26,6 @@ jobs:
 
       script:
         - export PYTHONPATH="${PYTHONPATH}:${TRAVIS_BUILD_DIR}/firos/include/FiwareObjectConverter"
-        - echo $PYTHONPATH
         - cd firos && python -m unittest discover
 
 

@@ -172,7 +172,7 @@ class RosTopicHandler:
 
             robotID: The Robot-Id
             topic: The topic to be published
-            convertedData: the converted data from the cbSubscriber
+            convertedData: the converted data from the Subscriber
             dataStruct: The struct of convertedData, specified by their types
         '''
         if robotID in ROS_PUBLISHER and topic in ROS_PUBLISHER[robotID]:

@@ -125,6 +125,7 @@ class CbPublisher(Publisher):
         # Set Definition-Dict if not set
         if msgDefintionDict is None:
             msgDefintionDict = {}
+        # Convert rawMsg 
         completeJsonStr = ObjectFiwareConverter.obj2Fiware(self.posted_history[robotID], ind=0, dataTypeDict=msgDefintionDict,  ignorePythonMetaData=True) 
 
         # format json, so that the contextbroker accepts it.

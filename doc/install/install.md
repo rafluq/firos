@@ -1,4 +1,4 @@
-# Installion From Scratch With ROS and catkin
+# Installion From Scratch With ROS, Orion Context-Broker and catkin
 
 To Install Firos you first need to follow this [Installaion Instuctions](http://wiki.ros.org/ROS/Installation). ROS is
 needed for FIROS, since it imports `ROS-messages` and uses other specific `ROS-Executables` like `rospy` or `rostopic`.
@@ -69,9 +69,9 @@ example-configuration-folder in `config`. The `config.json`-file should contain 
 You need to specifiy, which environment you want to use. In this example the environment-configuration `"mobile"` is
 shown but the environment-configuration `"local"` (also somewhere in this file) is used. Specify your own
 environment-configuration, or edit one to your needs. The values for `"contextbroker->adress"`, `"contextbroker->port"`
-and `"interface"` need to be set in every environment-configuration. The Information from the contextbroker can be
-retrieved by its configuration. If you are running a local instance, `"contextbroker->adress"` can also be set to
-`"localhost"`. You can retrieve information about your network interface via:
+and `"interface"` need to be set for this example to work. The Information from the contextbroker can be retrieved by
+its configuration. If you are running a local instance, `"contextbroker->adress"` can also be set to `"localhost"`. You
+can retrieve information about your network interface via:
 
 > ip link
 

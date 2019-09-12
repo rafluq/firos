@@ -66,7 +66,7 @@ class CbSubscriber(Subscriber):
 
     def __init__(self):
         ''' 
-            Lazy Initialization of CB_BASE_URL and FIROS_NOTIFY_URL
+            Lazy Initialization of CB_BASE_URL
             and setting up Configuration-Parameters
         '''
         # Do nothing if no Configuration is provided!
@@ -126,8 +126,8 @@ class CbSubscriber(Subscriber):
 
 
 
-            So After everything is set up that, Firos can be notified, explicitly here the method:
-            """CBServer.CBHandler.do_post""" is invoked. This method handles the Conversion back into a conform ROS-Message.
+            So After everything is set up, Firos can be notified, explicitly here the method:
+            """CBServer.CBHandler.do_post""" is invoked by Notification. This method handles the Conversion back into a conform "ROS-Message".
 
             After we did the Conversion, we simply need to call  """RosTopicHandler.publish"""
 
@@ -311,7 +311,7 @@ class CBServer:
         ''' This is the FIROS-HTTP-Request-Handler. It is needed,
             because the ContextBroker sends Information about the
             subscriptions via HTTP. This Class just handles incoming 
-            Requests and converts the received Data into a ROS-conform Messag.
+            Requests and converts the received Data into a "ROS-conform Message".
             in """do_POST""" we invoke """RosTopicHandler.publish"""
         '''
 

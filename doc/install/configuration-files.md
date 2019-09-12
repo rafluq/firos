@@ -11,8 +11,8 @@ In the follwing each of the configuration files are explained in detail:
 ## `config.json`
 
 The `config.json`-Configuration contains all basic FIROS-Configuration-Parameters which can be manipulated by the user.
-There are some required parameters (like `"interface"` or at least one place where FIROS is able to publish its data,
-like a `contextbroker`).
+No parameters are required, but you should specify it anyway, since you need to give FIROS Parameters, so that it can
+publish and subscribe on that.
 
 Inside this file you can specify multiple configurations. Via the `"environment"`-attribute you can select a specific
 configuration as shown in the following example:
@@ -41,7 +41,9 @@ configuration as shown in the following example:
 }
 ```
 
-Here is the list of all possibilities for a configuration:
+We also added here the contextbroker configuration, since we want to publish and subscribe data onto it.
+
+Here is the list of all currently possibilities for a configuration:
 
 | Attribute              | Value                                                                                                                                                                                                                                                              | Required |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------: |
@@ -62,8 +64,8 @@ experience errors. This usually occurs when this port is already occupied by ano
 
 ### `"contextbroker"`-Configuration
 
-The contextbroker configuration need to specifiy the `"adress"` and `"port"` attribute to point to a running
-Context-Broker. If you are running a local Context-Broker, `"adress"` can also be set to `"localhost"`.
+The contextbroker configuration need to specifiy the `"address"` and `"port"` attribute to point to a running
+Context-Broker. If you are running a local Context-Broker, `"address"` can also be set to `"localhost"`.
 `"subscriptions"`-value is again another object `{}` which can contain the following:
 
 | Attribute                    | Value                                                                                                                                                                                                                                                                                |
@@ -76,11 +78,11 @@ Context-Broker. If you are running a local Context-Broker, `"adress"` can also b
 
 ## `robots.json`
 
-This configuration describes which information the FIROS-instance should publish to the Context-Broker and publish into
+This configuration describes which information the FIROS-instance should publish to the Non-ROS-World and publish into
 the ROS-World. There exist two different point of views: so we decided, that the publish-subscribe-terminology is at the
-Context-Brokers point of view. Here is an example to publish `turtlesim`'s message/topic `Pose`-information into the
-Context-Broker by subscribing to it. Accordingly, if the Context-Broker receives any Information about the `cmd_vel`
-(`Twist`-Information), its data is published into the ROS-World:
+Non-ROS-World (e.g. Context-Brokers) point of view. Here is an example to publish `turtlesim`'s message/topic
+`Pose`-information into the Non-ROS-World by subscribing to it. Accordingly, if the Non-ROS-World somehow receives any
+Information about the `cmd_vel` (`Twist`-Information), its data is published into the ROS-World:
 
 ```json
 {
@@ -100,11 +102,11 @@ Context-Broker by subscribing to it. Accordingly, if the Context-Broker receives
 ```
 
 This json in particular listens to the rostopic `/turtle1/pose` with the message type `"turtlesim.msg.Pose"` (the
-corresponding python message from `turtlesim/Pose`) and sends all retreived data to the specified Context Broker. It
-publishes data into `/turtle1/cmd_vel` after receiving a notifcation of the Context-Broker from type
-`geometry_msgs/Twist`.
+corresponding python message from `turtlesim/Pose`) and sends all retreived data to the specified server in the
+Non-ROS-World. It publishes data into `/turtle1/cmd_vel` after receiving a notifcation of the server from the
+Non-ROS-World from type `geometry_msgs/Twist`.
 
-To clarify this behaviour, please have a look at this:
+To clarify this behaviour, please have a look at this example with the Non-ROS-World being an Orion Context-Broker :
 
 ![Illustration](../media/pubsub-Illustration.png)
 
@@ -112,7 +114,7 @@ The green arrows are specified by the `config.json` (and `whitelist.json`). The 
 from the green arrows, which happens automatically.
 
 You do not have to specify `publisher` and `subscriber` of all available topics or at all for a robot. Only specify the
-needed ones, which need to be displayed from/or need to obtain information on the Context-Broker
+needed ones, which need to be displayed from/or need to obtain information on the Non-ROS-World
 
 ```json
 {
@@ -196,9 +198,10 @@ Here we address all `turtle[a-zA-Z0-9]+` and `robot[a-zA-Z0-9]+` Robots with the
 
 ## `robotdescriptions.json`
 
-This configuration is optional and just appends additional information into the Context-Broker under the
-`"descriptions"`-attribute. Those can be Links/Strings or maybe some 'static' values you need to have present for a
-robot/topic.
+This configuration is optional and just appends additional information into the Non-ROS-World if even implemented.
+
+E. g. The Context-Broker puts them under the `"descriptions"`-attribute. Those can be Links/Strings or maybe some
+'static' values you need to have present for a robot/topic.
 
 It can look like this:
 

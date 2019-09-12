@@ -9,8 +9,8 @@ use_directory_urls: false
 theme: readthedocs
 extra_css:
   [
-    "https://fiware.org/style/fiware_readthedocs.css",
-    "https://fiware.org/style/fiware_readthedocs_iot.css",
+    "https://www.fiware.org/style/fiware_readthedocs.css",
+    "https://www.fiware.org/style/fiware_readthedocs_iot.css",
   ]
 
 
@@ -26,6 +26,7 @@ nav:
         - Installation: install/install.md
         - Configuration: install/configuration-files.md
         - Example: install/turtlesim-example.md
+        - Creating own Standards: install/standards.md
         - Deinstallation: install/deinstall.md
         - Upgrading from previous versions: install/upgrade.md
     - Usage: usage.md
