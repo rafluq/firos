@@ -187,7 +187,7 @@
     },
     "no-dead-link": {
        "ignoreRedirects": true,
-       "ignore": [ ]
+       "ignore": [ "https://firos.docs.apiary.io/" ]
     }
   }
 }
