@@ -2,7 +2,7 @@
 
 FIROS has several REST entry points that can be used to get or post data from/to FIROS.
 
-You can find the old FIROS API [here](http://docs.FIROS.apiary.io/#) (OLD)
+You can find the old FIROS API [here](http://docs.FIROS.apiary.io/) (OLD)
 
 ## GET /robots
 
