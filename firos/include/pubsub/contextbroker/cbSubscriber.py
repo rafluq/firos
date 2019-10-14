@@ -235,7 +235,7 @@ class CbSubscriber(Subscriber):
             },
             "notification": {
             "http": {
-                "url": "http://{}:{}".format(C.MAP_SERVER_ADRESS, self.server.port)
+                "url": "http://{}:{}".format(C.EP_SERVER_ADRESS, self.server.port)
             },
             "attrs": [str(topic)]
             },
@@ -282,7 +282,10 @@ class CBServer:
 
         Protocol = "HTTP/1.0"
 
-        server_address = ("0.0.0.0", 0)
+        if C.EP_SERVER_PORT is not None and isinstance(C.EP_SERVER_PORT, int) :
+            server_address = ("0.0.0.0", C.EP_SERVER_PORT)
+        else:
+            server_address = ("0.0.0.0", 0)
 
         self.CBHandler.protocol_version = Protocol
         self.httpd = HTTPServer(server_address, self.CBHandler)
@@ -294,7 +297,7 @@ class CBServer:
         # Get Port and HostName and save port
         sa = self.httpd.socket.getsockname()
         self.port = sa[1]
-        Log("INFO", "\nListening for Context-Broker-Messages on: ", C.MAP_SERVER_ADRESS, ":", sa[1])
+        Log("INFO", "\nListening for Context-Broker-Messages on: ", C.EP_SERVER_ADRESS, ":", sa[1])
 
         # Notify and start handling Requests
         self.thread_event.set()

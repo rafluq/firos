@@ -21,8 +21,7 @@ Before executing any commands you need to create two configuration folders. In t
         "contextbroker": {
             "address": "localhost",
             "port": 1026
-        },
-        "interface": "enp0s31f6"
+        }
     }
 }
 ```
@@ -38,9 +37,8 @@ Before executing any commands you need to create two configuration folders. In t
 }
 ```
 
-**NOTE** `config.json`: In this case, the interface we use (which we retreived via `ip link`) is `"enp0s31f6"`. The
-Context-Broker runs locally, so the configuration should be fine for you, as long as your Context-Broker is also
-locally.
+**NOTE** `config.json`: The Context-Broker runs locally, so the configuration should be fine for you, as long as your
+Context-Broker is also locally.
 
 Inside `config_1` we add the file `robots.json` with the following content:
 

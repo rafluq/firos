@@ -35,8 +35,7 @@ configuration as shown in the following example:
                 "subscription_refresh_delay": 0.9
             }
         },
-        "log_level": "INFO",
-        "interface": "enp1234"
+        "log_level": "INFO"
     }
 }
 ```
@@ -45,17 +44,17 @@ We also added here the contextbroker configuration, since we want to publish and
 
 Here is the list of all currently possibilities for a configuration:
 
-| Attribute              | Value                                                                                                                                                                                                                                                              | Required |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------: |
-| "interface"            | Can be `"public"` or another string of one of the interfaces given by `ip link` or by `ifconfig`. If set to `"public"`, the public IP-address is set for the Map-Server (via [this](http://ip.42.pl/raw)). Otherwise the (specified) interface IP-address is used. |    x     |
-| "log_level"            | Can be either `"INFO"` (Default), `"DEBUG"`, `"WARNING"`, `"ERROR"` or `"CRITICAL"`.                                                                                                                                                                               |          |
-| "node_name"            | This sets the ROS-Node-Name for this FIROS instance. The default is `"firos"`.                                                                                                                                                                                     |          |
-| "ros_subscriber_queue" | The queue-size of the `rospy.Publisher`. See more [here](http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers). Default is `10`                                                                                                                       |          |
-| "context_type"         | This sets the context type of an entity (the `type`-value of the base-entity). Default is `"ROBOT"` but can be changed if necessary                                                                                                                                |          |
-| "rosbridge_port"       | Changes the ROS-Port, where to listen. Default is `9090`                                                                                                                                                                                                           |          |
-| "server"               | An object `{}` which contains the attribute `"port"`                                                                                                                                                                                                               |          |
-| "contextbroker"        | An object `{}` which contains the attributes `"adress"`, `"port"` and `"subscriptions"`                                                                                                                                                                            |    x     |
-| "pub_frequency"        | An Integer of Milliseconds. This limits the number of publishes e.g. to the Context-Broker. This blocks the next publish for `pub_frequency` milliseconds.                                                                                                         |          |
+| Attribute              | Value                                                                                                                                                      | Required |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: |
+| "endpoint"             | An object, which can have an `address` and a `port`. If the Address differs, where FIROS should get the notifications from, then at this here.             |          |
+| "log_level"            | Can be either `"INFO"` (Default), `"DEBUG"`, `"WARNING"`, `"ERROR"` or `"CRITICAL"`.                                                                       |          |
+| "node_name"            | This sets the ROS-Node-Name for this FIROS instance. The default is `"firos"`.                                                                             |          |
+| "ros_subscriber_queue" | The queue-size of the `rospy.Publisher`. See more [here](http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers). Default is `10`               |          |
+| "context_type"         | This sets the context type of an entity (the `type`-value of the base-entity). Default is `"ROBOT"` but can be changed if necessary                        |          |
+| "rosbridge_port"       | Changes the ROS-Port, where to listen. Default is `9090`                                                                                                   |          |
+| "server"               | An object `{}` which contains the attribute `"port"`                                                                                                       |          |
+| "contextbroker"        | An object `{}` which contains the attributes `"adress"`, `"port"` and `"subscriptions"`                                                                    |    x     |
+| "pub_frequency"        | An Integer of Milliseconds. This limits the number of publishes e.g. to the Context-Broker. This blocks the next publish for `pub_frequency` milliseconds. |          |
 
 ### `"server"`-Configuration
 

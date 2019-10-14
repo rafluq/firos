@@ -16,6 +16,7 @@ services:
     volumes: 
       - "./docker-config/robots.json:/catkin_ws/src/firos/config/robots.json"
       - "./docker-config/whitelist.json:/catkin_ws/src/firos/config/whitelist.json"
+      - "./docker-config/config.json:/catkin_ws/src/firos/config/config.json"
 
   mongo: 
     command: "--nojournal"
@@ -25,6 +26,7 @@ services:
   orion: 
     command: "-dbhost mongo"
     container_name: orion
+    hostname: orion
     image: fiware/orion
     links: 
       - mongo

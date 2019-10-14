@@ -42,8 +42,7 @@ With the new Folder you created, you are now able to add Configuration-Parameter
             "myParam": "SomeString",
             "PortOrSomeInt": 12345
         },
-        "log_level": "INFO",
-        "interface": "public"
+        "log_level": "INFO"
     }
 }
 ```

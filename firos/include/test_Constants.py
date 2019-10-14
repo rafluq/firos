@@ -37,8 +37,8 @@ class Test_Constants(unittest.TestCase):
         '''
         C = Constants
         C.LOGLEVEL = "INFO"
-        C.INTERFACE = "public"
-        C.MAP_SERVER_ADRESS = None
+        C.EP_SERVER_ADRESS = None
+        C.EP_SERVER_PORT = None
         C.MAP_SERVER_PORT = 10100
         C.ROSBRIDGE_PORT = 9090
         C.DATA = None
@@ -53,9 +53,8 @@ class Test_Constants(unittest.TestCase):
         C = Constants
 
         self.assertEqual(C.LOGLEVEL, "INFO")
-        self.assertEqual(C.INTERFACE, "public")
 
-        self.assertEqual(C.MAP_SERVER_ADRESS, None)
+        self.assertEqual(C.EP_SERVER_ADRESS, None)
         self.assertEqual(C.MAP_SERVER_PORT, 10100)
         self.assertEqual(C.ROSBRIDGE_PORT, 9090)
         self.assertEqual(C.DATA, None)
@@ -86,9 +85,9 @@ class Test_Constants(unittest.TestCase):
         C.init("NON_EXISTENT_PATH")
 
         self.assertEqual(C.LOGLEVEL, "INFO")
-        self.assertEqual(C.INTERFACE, "public")
 
-        # self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
+        self.assertNotEqual(C.EP_SERVER_ADRESS, None) # should be set apropiatly
+        self.assertEqual(C.EP_SERVER_PORT, None)
         self.assertEqual(C.MAP_SERVER_PORT, 10100)
         self.assertEqual(C.ROSBRIDGE_PORT, 9090)
         self.assertEqual(C.DATA, {})
@@ -102,25 +101,25 @@ class Test_Constants(unittest.TestCase):
         self.assertEqual(C.configured, True)
 
 
-    def test_Constants_With_Missing_Interface(self):
+    def test_Constants_With_Missing_Endpoint(self):
         C = Constants
         Constants.configured = False
-        C.init("../test_data/testConfigFiles/missInterface")
+        C.init("../test_data/testConfigFiles/missEndpoint")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
-        self.assertEqual(C.INTERFACE, "public")
 
-        #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
+        self.assertNotEqual(C.EP_SERVER_ADRESS, None) # should be set aprioiately
+        self.assertEqual(C.EP_SERVER_PORT, None)
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
-        self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missInterface"))
+        self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missEndpoint"))
         self.assertEqual(C.CONTEXT_TYPE, "TestContext")
         self.assertEqual(C.PUB_FREQUENCY, 1)
 
         self.assertEqual(C.ROS_NODE_NAME, "TestFIROS")
         self.assertEqual(C.ROS_SUB_QUEUE_SIZE, 9)
 
-        self.assertEqual(C.PATH, "../test_data/testConfigFiles/missInterface")
+        self.assertEqual(C.PATH, "../test_data/testConfigFiles/missEndpoint")
         self.assertEqual(C.configured, True)
             
 
@@ -132,9 +131,9 @@ class Test_Constants(unittest.TestCase):
         C.init("../test_data/testConfigFiles/missLogLevel")
 
         self.assertEqual(C.LOGLEVEL, "INFO")
-        self.assertEqual(C.INTERFACE, "lo")
 
-        #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
+        self.assertEqual(C.EP_SERVER_ADRESS, "123.456.789.254")
+        self.assertEqual(C.EP_SERVER_PORT, 1235)
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
         self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missLogLevel"))
@@ -154,9 +153,9 @@ class Test_Constants(unittest.TestCase):
         C.init("../test_data/testConfigFiles/missServerPort")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
-        self.assertEqual(C.INTERFACE, "lo")
 
-        #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
+        self.assertEqual(C.EP_SERVER_ADRESS, "123.456.789.254")
+        self.assertEqual(C.EP_SERVER_PORT, 1235)
         self.assertEqual(C.MAP_SERVER_PORT, 10100)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
         self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missServerPort"))
@@ -176,9 +175,9 @@ class Test_Constants(unittest.TestCase):
         C.init("../test_data/testConfigFiles/missContextBroker")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
-        self.assertEqual(C.INTERFACE, "lo")
 
-        #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
+        self.assertEqual(C.EP_SERVER_ADRESS, "123.456.789.254")
+        self.assertEqual(C.EP_SERVER_PORT, 1235)
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
         self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missContextBroker"))
@@ -198,9 +197,9 @@ class Test_Constants(unittest.TestCase):
         C.init("../test_data/testConfigFiles/missNodeName")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
-        self.assertEqual(C.INTERFACE, "lo")
 
-        #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
+        self.assertEqual(C.EP_SERVER_ADRESS, "123.456.789.254")
+        self.assertEqual(C.EP_SERVER_PORT, 1235)
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
         self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missNodeName"))
@@ -219,9 +218,9 @@ class Test_Constants(unittest.TestCase):
         C.init("../test_data/testConfigFiles/missRosSubscriberQueue")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
-        self.assertEqual(C.INTERFACE, "lo")
 
-        #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
+        self.assertEqual(C.EP_SERVER_ADRESS, "123.456.789.254")
+        self.assertEqual(C.EP_SERVER_PORT, 1235)
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
         self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missRosSubscriberQueue"))
@@ -240,9 +239,9 @@ class Test_Constants(unittest.TestCase):
         C.init("../test_data/testConfigFiles/missContextType")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
-        self.assertEqual(C.INTERFACE, "lo")
 
-        #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
+        self.assertEqual(C.EP_SERVER_ADRESS, "123.456.789.254")
+        self.assertEqual(C.EP_SERVER_PORT, 1235)
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
         self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missContextType"))
@@ -263,9 +262,9 @@ class Test_Constants(unittest.TestCase):
         C.init("../test_data/testConfigFiles/missPubFrequency")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
-        self.assertEqual(C.INTERFACE, "lo")
 
-        #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
+        self.assertEqual(C.EP_SERVER_ADRESS, "123.456.789.254")
+        self.assertEqual(C.EP_SERVER_PORT, 1235)
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 4321)
         self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missPubFrequency"))
@@ -285,9 +284,9 @@ class Test_Constants(unittest.TestCase):
         C.init("../test_data/testConfigFiles/missRosBridge")
 
         self.assertEqual(C.LOGLEVEL, "WARNING")
-        self.assertEqual(C.INTERFACE, "lo")
 
-        #self.assertEqual(C.MAP_SERVER_ADRESS, None) # ?
+        self.assertEqual(C.EP_SERVER_ADRESS, "123.456.789.254")
+        self.assertEqual(C.EP_SERVER_PORT, 1235)
         self.assertEqual(C.MAP_SERVER_PORT, 12345)
         self.assertEqual(C.ROSBRIDGE_PORT, 9090)
         self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/missRosBridge"))
@@ -307,9 +306,9 @@ class Test_Constants(unittest.TestCase):
         C.init("../test_data/testConfigFiles/minimal")
 
         self.assertEqual(C.LOGLEVEL, "INFO")
-        self.assertEqual(C.INTERFACE, "public")
 
-        # self.assertEqual(C.MAP_SERVER_ADRESS, None)
+        self.assertNotEqual(C.EP_SERVER_ADRESS, None) # it is set appropiately
+        self.assertEqual(C.EP_SERVER_PORT, None)
         self.assertEqual(C.MAP_SERVER_PORT, 10100)
         self.assertEqual(C.ROSBRIDGE_PORT, 9090)
         self.assertEqual(C.DATA, C.setConfiguration("../test_data/testConfigFiles/minimal"))
