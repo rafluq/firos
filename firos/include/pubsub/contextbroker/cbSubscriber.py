@@ -356,6 +356,7 @@ class CBServer:
 
             # Send OK!
             self.send_response(204)
+            self.end_headers() # Python 3 needs an extra end_headers after send_response
 
 
         ### Back Conversion From Entity-JSON into Python-Object
