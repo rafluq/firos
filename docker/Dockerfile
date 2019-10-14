@@ -26,7 +26,6 @@ RUN echo '{\n\
          }\n\
       },\n\
       "log_level":"INFO",\n\
-      "interface":"eth0"\n\
    }\n\
 }\n' > /catkin_ws/src/firos/config/config.json
 

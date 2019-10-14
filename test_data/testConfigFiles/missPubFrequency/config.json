@@ -21,6 +21,9 @@
         "rosbridge_port": 4321,
 
         "log_level": "WARNING",
-        "interface": "lo"
+        "endpoint": {
+            "address": "123.456.789.254",
+            "port": 1235
+        }
     }
 }

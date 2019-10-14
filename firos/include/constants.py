@@ -17,6 +17,7 @@
 import os
 import json
 import netifaces
+import socket
 try:
     # Python 3
     from urllib.request import urlopen
@@ -30,9 +31,9 @@ class Constants:
     DATA = None
     # All Constants with their default value!
     LOGLEVEL = "INFO"
-    INTERFACE = "public"
 
-    MAP_SERVER_ADRESS = None
+    EP_SERVER_ADRESS = None
+    EP_SERVER_PORT = None
     MAP_SERVER_PORT = 10100
     ROSBRIDGE_PORT = 9090
     CONTEXT_TYPE = "ROBOT"   
@@ -57,9 +58,6 @@ class Constants:
 
             configData = cls.setConfiguration(path)
             cls.DATA = configData
-
-            if "interface" in configData:
-                cls.INTERFACE = configData["interface"]
             
             if "log_level" in configData:
                 cls.LOGLEVEL = configData["log_level"]
@@ -76,12 +74,16 @@ class Constants:
             if "context_type" in configData:
                 cls.CONTEXT_TYPE = configData["context_type"]
 
-
-            if cls.INTERFACE == "public":
-                cls.MAP_SERVER_ADRESS = urlopen('http://ip.42.pl/raw').read()
+            if "endpoint" in configData and "address" in configData["endpoint"]:
+                    cls.EP_SERVER_ADRESS = configData["endpoint"]["address"]
             else:
-                netifaces.ifaddresses(cls.INTERFACE)
-                cls.MAP_SERVER_ADRESS = netifaces.ifaddresses(cls.INTERFACE)[2][0]['addr']
+                # If not set, we get ourselves the ip-address
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                cls.EP_SERVER_ADRESS = s.getsockname()[0]
+
+            if "endpoint" in configData and "port" in configData["endpoint"]:
+                    cls.EP_SERVER_PORT = int(configData["endpoint"]["port"])
 
             if "rosbridge_port" in configData:
                 cls.ROSBRIDGE_PORT = int(configData["rosbridge_port"])

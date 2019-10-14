@@ -58,8 +58,7 @@ example-configuration-folder in `config`. The `config.json`-file should contain 
           "subscription_refresh_delay": 0.5
         }
     },
-    "log_level": "INFO",
-    "interface": "wlan0"
+    "log_level": "INFO"
   },
 
   ...
@@ -68,14 +67,9 @@ example-configuration-folder in `config`. The `config.json`-file should contain 
 
 You need to specifiy, which environment you want to use. In this example the environment-configuration `"mobile"` is
 shown but the environment-configuration `"local"` (also somewhere in this file) is used. Specify your own
-environment-configuration, or edit one to your needs. The values for `"contextbroker->adress"`, `"contextbroker->port"`
-and `"interface"` need to be set for this example to work. The Information from the contextbroker can be retrieved by
-its configuration. If you are running a local instance, `"contextbroker->adress"` can also be set to `"localhost"`. You
-can retrieve information about your network interface via:
-
-> ip link
-
-Just set it appropriately.
+environment-configuration, or edit one to your needs. The values for `"contextbroker->adress"` and
+`"contextbroker->port"` need to be set for this example to work. The Information from the contextbroker can be retrieved
+by its configuration.
 
 This is the absolute minimum configuration you need to do in order to be able to start up FIROS. To actually publish and
 subscribe to ROS-Topics you should checkout [Configuration-Files](configuration-files.md) or the
