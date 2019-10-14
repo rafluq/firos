@@ -14,8 +14,7 @@
           "subscription_refresh_delay": 0.5
         }
     },
-    "log_level": "INFO",
-    "interface": "wlan0"
+    "log_level": "INFO"
   },
 
   "multiple": {
@@ -37,8 +36,7 @@
         "subscription_refresh_delay": 0.5
       }
     },
-    "log_level": "INFO",
-    "interface": "public"
+    "log_level": "INFO"
   },
 
   "local": {
@@ -55,7 +53,6 @@
         }
     },
     "log_level": "INFO",
-    "interface": "eth0",
     "map_server_port": 10101,
     "rosbridge_port": 9090
   },
@@ -74,7 +71,6 @@
         }
     },
     "log_level": "INFO",
-    "interface": "wlan0",
     "map_server_port": 10101,
     "rosbridge_port": 9090
   },
@@ -94,8 +90,7 @@
     },
     "map_server_port": 10101,
     "rosbridge_port": 9090,
-    "log_level": "INFO",
-    "interface": "public"
+    "log_level": "INFO"
   },
 
   "production": {
@@ -111,7 +106,6 @@
           "subscription_refresh_delay": 20
         }
     },
-    "log_level": "INFO",
-    "interface": "public"
+    "log_level": "INFO"
   }
 }
