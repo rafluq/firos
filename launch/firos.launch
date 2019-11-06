@@ -1,6 +1,6 @@
 <launch>
-  <!-- <arg name="config_path" default="$(find firos)/config" /> -->
-  <arg name="config_path" default="$(find opil_demonstrator_ga)/data/firos/robotnik" />
+  <arg name="config_path" default="$(find firos)/config" />
+
   <arg name="node_name" default="firos" />
   <arg name="node_namespace"  default="" />
 
