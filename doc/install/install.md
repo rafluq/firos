@@ -22,7 +22,7 @@ git clone --recursive https://github.com/iml130/firos.git
 cd "catkin_workspace_base_directory"/src/firos
 
 # Install Dependencies
--pip install -r requirements.txt
+pip install -r requirements.txt
 
 # Make Node
 cd "catkin_workspace_base_directory"
