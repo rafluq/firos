@@ -1,0 +1,10 @@
+<launch>
+  <!-- <arg name="config_path" default="$(find firos)/config" /> -->
+  <arg name="config_path" default="$(find opil_demonstrator_ga)/data/firos/robotnik" />
+  <arg name="node_name" default="firos" />
+  <arg name="node_namespace"  default="" />
+
+  <node name="$(arg node_name)" pkg="firos" type="core.py" output="screen">
+    <param name="config_path" value="$(arg config_path)" />
+  </node>
+</launch>

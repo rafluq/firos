@@ -1,12 +1,12 @@
 {
-  "environment": "local",
+  "environment": "docker",
 
-  "mobile": {
+  "docker": {
     "server": {
-        "port": 10100
+        "port"      : 10100
     },
     "contextbroker": {
-        "address"   : "192.168.43.159",
+        "address"   : "192.168.100.76",
         "port"      : 1026,
         "subscription": {
           "throttling": 0,
@@ -14,97 +14,9 @@
           "subscription_refresh_delay": 0.5
         }
     },
-    "log_level": "INFO"
-  },
-
-  "multiple": {
-    "server": {
-        "port": 10100
-    },
-    "contextbroker": {
-      "index": {
-        "address"   : "192.168.4.70",
-        "port"      : 1026
-      },
-      "data": {
-        "address"   : "0.0.0.0",
-        "port"      : 1026
-      },
-      "subscription": {
-        "throttling": 0,
-        "subscription_length": 300,
-        "subscription_refresh_delay": 0.5
-      }
-    },
-    "log_level": "INFO"
-  },
-
-  "local": {
-    "server": {
-        "port": 10100
-    },
-    "contextbroker": {
-        "address"   : "192.168.4.70",
-        "port"      : 1026,
-        "subscription": {
-          "throttling": 0,
-          "subscription_length": 300,
-          "subscription_refresh_delay": 0.5
-        }
-    },
-    "log_level": "INFO",
-    "map_server_port": 10101,
-    "rosbridge_port": 9090
-  },
-
-  "demo": {
-    "server": {
-        "port": 10100
-    },
-    "contextbroker": {
-        "address"   : "192.168.4.70",
-        "port"      : 1026,
-        "subscription": {
-          "throttling": 0,
-          "subscription_length": 300,
-          "subscription_refresh_delay": 0.5
-        }
-    },
-    "log_level": "INFO",
-    "map_server_port": 10101,
-    "rosbridge_port": 9090
-  },
-
-  "development": {
-    "server": {
-        "port": 10100
-    },
-    "contextbroker": {
-        "address"   : "0.0.0.0",
-        "port"      : 1026,
-        "subscription": {
-          "throttling": 0,
-          "subscription_length": 300,
-          "subscription_refresh_delay": 0.5
-        }
-    },
-    "map_server_port": 10101,
-    "rosbridge_port": 9090,
-    "log_level": "INFO"
-  },
-
-  "production": {
-    "server": {
-        "port": 10100
-    },
-    "contextbroker": {
-        "address"   : "0.0.0.0",
-        "port"      : 1026,
-        "subscription": {
-          "throttling": 0,
-          "subscription_length": 300,
-          "subscription_refresh_delay": 20
-        }
+    "endpoint": {
+      "address": "10.64.6.176",
+      "port": 39001
     },
     "log_level": "INFO"
   }
