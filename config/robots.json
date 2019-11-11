@@ -1,34 +1,34 @@
 {
-    "map": {
-        "topics": {
-            "graph": {
-                "msg": "maptogridmap.msg.Graph",
-                "type": "publisher"
-            }
-        }
-    },
-    "robot_opil_v2": {
-        "topics": {
-            "current_motion": {
-                "msg": "mars_agent_physical_robot_msgs.msg.Motion",
-                "type": "publisher"
-            },
-            "robot_properties": {
-                "msg": "mars_agent_physical_robot_msgs.msg.RobotAgentProperties",
-                "type": "publisher"
-            },
-            "cancel_order": {
-                "msg": "mars_agent_physical_robot_msgs.msg.CancelTask",
-                "type": "subscriber"
-            },
-            "motion_assignment": {
-                "msg": "mars_agent_physical_robot_msgs.msg.MotionAssignment",
-                "type": "subscriber"
-            },
-            "action_assignment": {
-                "msg": "mars_agent_physical_robot_msgs.msg.ActionAssignment",
-                "type": "subscriber"
-            }
-        }
-    }
+	"robot2":{
+		"topics": {
+			"cmd_vel_mux/input/teleop": {
+				"msg": "geometry_msgs.msg.Twist",
+				"type": "publisher"
+			},
+			"cmd_serial": {
+				"msg": "std_msgs.msg.String",
+				"type": "publisher"
+			},
+			"move_base/goal": {
+				"msg": "move_base_msgs.msg.MoveBaseActionGoal",
+				"type": "publisher"
+			},
+			"move_base/result": {
+				"msg": "move_base_msgs.msg.MoveBaseActionResult",
+				"type": "subscriber"
+			}
+		}
+	},
+	"end_end_test":{
+		"topics": {
+			"p1": {
+				"msg": "std_msgs.msg.String",
+				"type": "publisher"
+			},
+			"s1": {
+				"msg": "std_msgs.msg.String",
+				"type": "subscriber"
+			}
+		}
+	}
 }

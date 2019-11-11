@@ -37,66 +37,8 @@ import argparse
 from include.constants import Constants as C
 
 _NODE_NAME = "firos"
-
-STD_PARAM_CONF_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../config"
 STD_PARAM_NAME_CONF_PATH = "config_path"
 
-def __get_param(nh, param_name, default_value=None):
-    """Reads the parameter and print the result.
-
-    Reads the parameter from the paramter server and print the result. If no
-    value can be find on the parameter server, a default value will
-    be assigned.
-
-    Args:
-        nh: node handle, global or private.
-        param_name: name of the parameter.
-        default_value: value which has to be assigned if no parameter
-            can be found on the parameter server. (optional)
-
-    Returns:
-        Returns the value of the requested ros param.
-
-    Raises:
-        Raises ReadParamException if no value can be found on the paramter
-            server and no default value was given.
-    """
-    value = default_value
-
-    if default_value == None:
-        if nh == "" or nh == "~":
-            if rospy.has_param(nh + param_name):
-                value = rospy.get_param(nh + param_name)
-                rospy.loginfo("[MARSTopologyLauncher][__get_param] "
-                                + "Found parameter: "
-                                + str(param_name) + ", value: " + str(value))
-            else:
-                error = "[MARSTopologyLauncher][__get_param] Could not get " \
-                    + "param: " + param_name
-        else:
-            error = "[MARSTopologyLauncher][__get_param] " \
-                + "Unsupported node handle given: " + str(nh) \
-                + " Only empty string or '~' is allowed! Assigning" \
-                + " default vaulue!"
-    else:
-        if nh == "" or nh == "~":
-            if rospy.has_param(nh + param_name):
-                value = rospy.get_param(nh + param_name)
-                rospy.loginfo("[MARSTopologyLauncher][__get_param] "
-                                + "Found parameter: "
-                                + str(param_name) + ", value: " + str(value))
-            else:
-                rospy.loginfo("[MARSTopologyLauncher][__get_param] "
-                                + "Cannot find value for parameter: "
-                                + str(param_name) + ", assigning default: "
-                                + str(default_value))
-        else:
-            rospy.logerr("[MARSTopologyLauncher][__get_param] "
-                            + "Unsupported node handle given: " + str(nh)
-                            + " Only empty string or '~' is allowed!"
-                            + " Assigning default vaulue!")
-
-    return value
 
 # Main function.
 if __name__ == '__main__':
@@ -129,14 +71,17 @@ if __name__ == '__main__':
     results = parser.parse_args()
     
     # At first determine the config-Folder location (either in firos/config or customly set)
-    # current_path = os.path.dirname(os.path.abspath(__file__))
-    # conf_path = current_path + "/../config"
-    conf_path = __get_param("~", STD_PARAM_NAME_CONF_PATH, STD_PARAM_CONF_PATH)
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    conf_path = current_path + "/../config"
     
+    # Check if a value for the path is specified already in ROS
+    if rospy.has_param("~" + STD_PARAM_NAME_CONF_PATH):
+        conf_path = rospy.get_param("~" + STD_PARAM_NAME_CONF_PATH)
+
+    # Check if the CLI specified a config folder 
     if results.conf_Fold is not None:
         current_path = os.getcwd()
-        conf_path= current_path + "/" + results.conf_Fold
-
+        conf_path = current_path + "/" + results.conf_Fold
 
 
     # Initialize global variables (Constants.py)

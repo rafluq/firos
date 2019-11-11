@@ -15,8 +15,8 @@
         }
     },
     "endpoint": {
-      "address": "10.64.6.176",
-      "port": 39001
+      "address": "192.169.100.3",
+      "port": 4321
     },
     "log_level": "INFO"
   }
