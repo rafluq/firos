@@ -36,14 +36,9 @@ import argparse
 
 from include.constants import Constants as C
 
-_NODE_NAME = "firos"
-STD_PARAM_NAME_CONF_PATH = "config_path"
-
 
 # Main function.
 if __name__ == '__main__':
-
-    rospy.init_node(_NODE_NAME)
 
     # If launched via roslaunch, we get addtional parameters
     rosLaunch_name = None
@@ -74,15 +69,10 @@ if __name__ == '__main__':
     current_path = os.path.dirname(os.path.abspath(__file__))
     conf_path = current_path + "/../config"
     
-    # Check if a value for the path is specified already in ROS
-    if rospy.has_param("~" + STD_PARAM_NAME_CONF_PATH):
-        conf_path = rospy.get_param("~" + STD_PARAM_NAME_CONF_PATH)
 
     # Check if the CLI specified a config folder 
     if results.conf_Fold is not None:
-        current_path = os.getcwd()
-        conf_path = current_path + "/" + results.conf_Fold
-
+        conf_path = os.path.abspath(results.conf_Fold)
 
     # Initialize global variables (Constants.py)
     C.init(conf_path)
