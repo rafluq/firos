@@ -66,7 +66,7 @@ class Subscriber(ABC):
     configData = dict()
 
     @abc.abstractmethod
-    def subscribe(self, robotID, topicList, msgDefinitions):
+    def subscribe(self, robotID, topicList, topicTypes, msgDefinitions):
         pass
     
     @abc.abstractmethod
@@ -166,12 +166,12 @@ class PubSub(object):
         for pub in self.publishers:
             pub.unpublish()
 
-    def subscribe(self, robotID, topicList, msgDefinitions):
+    def subscribe(self, robotID, topicList, topicTypes, msgDefinitions):
         '''
             Call subscribe on each Subscriber
         '''
         for sub in self.subscribers:
-            sub.subscribe(robotID, topicList, msgDefinitions)
+            sub.subscribe(robotID, topicList, topicTypes, msgDefinitions)
     
     def unsubscribe(self):
         '''

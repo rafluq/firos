@@ -127,7 +127,7 @@ def loadMsgHandlers(robot_data):
 
         # After initializing ROS-PUB/SUBs, intitialize ContextBroker-Subscriber based on ROS-Publishers for each robot
         if robotID in ROS_PUBLISHER:
-            CloudPubSub.subscribe(str(robotID), ROS_PUBLISHER[robotID].keys(), ROS_TOPIC_AS_DICT)
+            CloudPubSub.subscribe(str(robotID), ROS_PUBLISHER[robotID].keys(), ROS_TOPIC_TYPE, ROS_TOPIC_AS_DICT) 
             Log("INFO", "\n")
             Log("INFO", "Subscribed to " + robotID + "'s topics\n")
 

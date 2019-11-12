@@ -107,7 +107,7 @@ class CbSubscriber(Subscriber):
         self.CB_BASE_URL = "http://{}:{}".format(data["address"], data["port"])
 
 
-    def subscribe(self, robotID, topicList, msgDefintions):
+    def subscribe(self, robotID, topicList, topicTypes, msgDefintions):
         ''' robotID: The string of the robotID
             topicList: A list of topics, corresponding to the robotID
             msgDefintions: The Messages-Definitions from ROS
@@ -148,11 +148,10 @@ class CbSubscriber(Subscriber):
 
         # If not already subscribed, start a new thread which handles the subscription for each topic for an robot.
         # And only If the topic list is not empty!
-        if robotID not in self.subscriptionIds and topicList:
-            Log("INFO", "Subscribing on Context-Broker to " + robotID + " and topics: " + str(list(topicList)))
-            self.subscriptionIds[robotID] = {}
-            for topic in topicList:
-                thread.start_new_thread(self.subscribeThread, (robotID, topic)) #Start Thread via subscription         
+        for topic in topicList:
+            if robotID + "/" + topic not in self.subscriptionIds:
+                Log("INFO", "Subscribing on Context-Broker to " + robotID + " and topics: " + str(list(topicList)))
+                thread.start_new_thread(self.subscribeThread, (robotID, topic, topicTypes, msgDefintions)) #Start Thread via subscription         
 
 
     def unsubscribe(self):
@@ -168,10 +167,9 @@ class CbSubscriber(Subscriber):
         self.server.close()
 
         # Unsubscribe to all Topics
-        for robotID in self.subscriptionIds:
-            for topic in self.subscriptionIds[robotID]:
-                response = requests.delete(self.CB_BASE_URL + self.subscriptionIds[robotID][topic])
-                self._checkResponse(response, subID=self.subscriptionIds[robotID][topic])
+        for robotIDTopic in self.subscriptionIds:
+            response = requests.delete(self.CB_BASE_URL + self.subscriptionIds[robotIDTopic])
+            self._checkResponse(response, subID=self.subscriptionIds[robotIDTopic])
 
 
 
@@ -179,7 +177,7 @@ class CbSubscriber(Subscriber):
     ########## Helpful Classes and Methods #############
     ####################################################
 
-    def subscribeThread(self, robotID, topic):
+    def subscribeThread(self, robotID, topic, topicTypes, msgDefintions):
         ''' 
             A Subscription-Thread. Its Life-Cycle is as follows:
             -> Subscribe -> Delete old Subs-ID -> Save new Subs-ID -> Wait ->
@@ -189,7 +187,7 @@ class CbSubscriber(Subscriber):
         '''
         while True:
             # Subscribe
-            jsonData = self.subscribeJSONGenerator(robotID, topic)
+            jsonData = self.subscribeJSONGenerator(robotID, topic, topicTypes, msgDefintions)
             response = requests.post(self.CB_BASE_URL + "/v2/subscriptions", data=jsonData, headers={'Content-Type': 'application/json'})
             self._checkResponse(response, created=True, robTop=(robotID, topic))
 
@@ -199,19 +197,19 @@ class CbSubscriber(Subscriber):
                 Log("WARNING",  "Firos was not able to subscribe to topic: {} for robot {}".format(topic, robotID))
 
             # Unsubscribe
-            if robotID in self.subscriptionIds and topic in self.subscriptionIds[robotID]:
-                response = requests.delete(self.CB_BASE_URL + self.subscriptionIds[robotID][topic])
+            if robotID  + "/" + topic in self.subscriptionIds:
+                response = requests.delete(self.CB_BASE_URL + self.subscriptionIds[robotID + "/" + topic])
                 self._checkResponse(response, subID=self.subscriptionIds[robotID][topic])
                 
             # Save new ID
-            self.subscriptionIds[robotID][topic] = newSubID
+            self.subscriptionIds[robotID + "/" + topic] = newSubID
 
             # Wait
             time.sleep(int(self.data["subscription"]["subscription_length"] * self.data["subscription"]["subscription_refresh_delay"])) # sleep Length * Refresh-Rate (where 0 < Refresh-Rate < 1)
             Log("INFO", "Refreshing Subscription for " + robotID + " and topic: " + str(topic))
 
 
-    def subscribeJSONGenerator(self, robotID, topic):
+    def subscribeJSONGenerator(self, robotID, topic, topicTypes, msgDefintions):
         ''' 
             This method returns the correct JSON-format to subscribe to the ContextBroker. 
             The Expiration-Date/Throttle and Type of robots is retreived here via the configuration we got
@@ -225,19 +223,16 @@ class CbSubscriber(Subscriber):
             "subject": {
                 "entities": [
                     {
-                    "id": str(robotID),
-                    "type": C.CONTEXT_TYPE
+                    "id": str(robotID + "/" + topic).replace("/", "."),  # OCB Specific!!
+                    "type": topicTypes[topic].replace("/", ".") # OCB Specific!!
                     }
-                ],
-                "condition": {
-                    "attrs": [str(topic)]
-                }
+                ]
             },
             "notification": {
             "http": {
                 "url": "http://{}:{}".format(C.EP_SERVER_ADRESS, self.server.port)
             },
-            "attrs": [str(topic)]
+            "attrs": msgDefintions[topic].keys() # TODO DL msgDefinition with robotID and topic!
             },
             "expires": time.strftime("%Y-%m-%dT%H:%M:%S.00Z", time.gmtime(time.time() + self.data["subscription"]["subscription_length"])), # ISO 8601
             "throttling": self.data["subscription"]["throttling"]  
@@ -340,21 +335,47 @@ class CBServer:
             receivedData = json.loads(recData)
             data = receivedData['data'][0] # Specific to NGSIv2 
             jsonData = json.dumps(data)
-            topics = data.keys() # Convention Topic-Names are the attributes by an JSON Object, except: type, id
 
-            # iterate through every 'topic', since we only receive updates from one topic
-            # Only id, type and 'topicname' are present
-            for topic in topics:
-                if topic != 'id' and topic != 'type':
-                    dataStruct = self._buildTypeStruct(data[topic])
 
-                    # Convert Back into a Python-Object
-                    obj = self.TypeValue()
-                    ObjectFiwareConverter.fiware2Obj(jsonData, obj, setAttr=True, useMetaData=False)
-                    # Publish in ROS
-                    RosTopicHandler.publish(data['id'], topic, getattr(obj, topic), dataStruct)
 
-            # Send OK!
+            obj = self.TypeValue()
+            ObjectFiwareConverter.fiware2Obj(jsonData, obj, setAttr=True, useMetaData=False)
+            obj.id = obj.id.replace(".", "/")
+            obj.type = obj.type.replace(".", "/")
+            
+            objType = obj.type
+            objId = obj.id.split("/")
+
+            del data["id"]
+            del data["type"]
+
+            tempDict = dict(type=objType, value=data)
+
+            dataStruct = self._buildTypeStruct(tempDict)
+
+
+
+
+            RosTopicHandler.publish(objId[0], objId[1], obj, dataStruct) # TODO DL
+
+
+
+
+            # topics = data.keys() # Convention Topic-Names are the attributes by an JSON Object, except: type, id
+
+            # # iterate through every 'topic', since we only receive updates from one topic
+            # # Only id, type and 'topicname' are present
+            # for topic in topics:
+            #     if topic != 'id' and topic != 'type':
+            #         dataStruct = self._buildTypeStruct(data[topic])
+
+            #         # Convert Back into a Python-Object
+            #         obj = self.TypeValue()
+            #         ObjectFiwareConverter.fiware2Obj(jsonData, obj, setAttr=True, useMetaData=False)
+            #         # Publish in ROS
+            #         RosTopicHandler.publish(data['id'], topic, getattr(obj, topic), dataStruct)
+
+            # # Send OK!
             self.send_response(204)
             self.end_headers() # Python 3 needs an extra end_headers after send_response
 
@@ -372,7 +393,7 @@ class CBServer:
             s = {}
 
             # Searching for a point to get ROS-Message-Types from the obj, see Fiware-Object-Converter
-            if 'value' in obj and 'type' in obj and "." in obj['type'] : 
+            if 'value' in obj and 'type' in obj and "/" in obj['type'] : 
                 s['type'] = obj['type']
                 objval = obj['value'] 
                 s['value'] = {}
