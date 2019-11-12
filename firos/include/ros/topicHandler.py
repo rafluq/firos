@@ -43,7 +43,7 @@ ROS_SUBSCRIBER_LAST_MESSAGE = {}
 ROS_SUBSCRIBER = {}
 
 # A Struct which is used to minimize the Number of publishes. Here we only
-# save time stamps of ids. LAST_PUBLISH_TIME[robotID, topic] would return a time 
+# save time stamps of ids. LAST_PUBLISH_TIME[robotID/topic] would return a time 
 LAST_PUBLISH_TIME = dict()
 
 # Topics in ROS do only have one data-type! 
@@ -145,7 +145,7 @@ def _publishToCBRoutine(data, args):
     if not SHUTDOWN_SIGNAL:
         robot = args['robot']
         topic = args['topic'] # Retreiving additional Infos, which were set on initialization 
-         
+    
         t = time.time() * 1000 # Get Millis
         if (robot+topic) in LAST_PUBLISH_TIME and LAST_PUBLISH_TIME[robot+topic] >= t:
             # Case: We want it to publish again, but we did not wait PUB_FREQUENCY milliseconds
@@ -153,7 +153,7 @@ def _publishToCBRoutine(data, args):
 
         CloudPubSub.publish(robot, topic, data, ROS_TOPIC_AS_DICT)
         ROS_SUBSCRIBER_LAST_MESSAGE[robot][topic] = data
-        LAST_PUBLISH_TIME[robot+topic] = t + C.PUB_FREQUENCY
+        LAST_PUBLISH_TIME[robot + "/" + topic] = t + C.PUB_FREQUENCY
 
 
 
