@@ -309,7 +309,9 @@ class CBServer:
             Requests and converts the received Data into a "ROS-conform Message".
             in """do_POST""" we invoke """RosTopicHandler.publish"""
         '''
-
+        def log_message(self, format, *args):
+            ''' Suppress prints! '''
+            return
 
         def do_GET(self):
             '''
