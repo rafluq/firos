@@ -25,7 +25,7 @@ from include.constants import Constants as C
 
 entries = [] # Entries we found in the ROS-World 
 whitelist = {} # The Current Whitelist FIROS is currently using
-robots = {} # The dictionary containing: robots[ROBOT_ID]["topics"][TOPIC_NAME]["msg"/"type"]
+robots = {} # The dictionary containing: robots["topics"] = [MessageType, pubSub]
 
 class RosConfigurator:
     '''
@@ -43,8 +43,8 @@ class RosConfigurator:
         global entries
         if refresh or len(entries) == 0:
             listOfData = rospy.get_published_topics()
-            entries = [item for sublist in listOfData for item in sublist]
-
+            entries = [item for sublist in listOfData for item in sublist if item.startswith("/")]
+            
         return entries
     
 
@@ -58,8 +58,6 @@ class RosConfigurator:
         if whitelist == {} or restore:
             json_path = C.PATH + "/whitelist.json"
             whitelist = json.load(open(json_path))
-            if len(whitelist) == 0:
-                Log("WARNING", "The 'whitelist.json' was not set. You might want to use a whitelist to avoid subscribing to every existing topic!")
 
         return whitelist
 
@@ -83,25 +81,16 @@ class RosConfigurator:
             entries = RosConfigurator.getAllTopics(refresh=refresh)
             whitelist = RosConfigurator.getWhiteList(restore=restore)
 
-            # Create the robots Structure as follows:
-            # robots[robotID]['topic'][topic]['publisher'/'subscriber']['type'/'msg']
+            # Create the robots Structure
             _robots = {}
 
-            for robotIDRegex in whitelist:
-                # For each RobotID Regex
-                if "publisher" in whitelist[robotIDRegex]:
-                    for topicRegex in whitelist[robotIDRegex]["publisher"]:
-                        # For each topic Regex in publisher
-                        # Build the Regex:
-                        fullRegex = ("^\/("+ robotIDRegex + ")\/("+ topicRegex + ")$")
-                        RosConfigurator.addRobots(_robots, fullRegex, entries, "publisher")
+            if "publisher" in whitelist:
+                for regex in whitelist["publisher"]:
+                    RosConfigurator.addRobots(_robots, regex, entries, "publisher")
 
-                if "subscriber" in whitelist[robotIDRegex]:
-                    for topicRegex in whitelist[robotIDRegex]["subscriber"]:
-                        # For each topic Regex in subscriber
-                        # Build the Regex:
-                        fullRegex = ("^\/("+ robotIDRegex + ")\/("+ topicRegex + ")$")
-                        RosConfigurator.addRobots(_robots, fullRegex, entries, "subscriber")
+            if "subscriber" in whitelist:
+                for regex in whitelist["subscriber"]:
+                    RosConfigurator.addRobots(_robots, regex, entries, "subscriber")
 
             robots = _robots
         return robots
@@ -114,7 +103,7 @@ class RosConfigurator:
             We iterate over each entry and initialize the robots-dict
             appropiately. Then It is simply added.
 
-            robots: The dictionary robots[ROBOT_ID]["topics"][TOPIC_NAME] = {msg, type}
+            robots: The dictionary robots["topics"] = [MessageType , pubSub]
             regex:  The Regex we try to match in each entry
             entries:The String Entries. Each element is in the following structure "/ROBOT_ID/TOPIC_NAME"
             pubsub: A String. Either "publisher" or "subscriber"
@@ -123,35 +112,21 @@ class RosConfigurator:
             matches = re.search(regex, entry)
             if matches is not None:
                 # We found a Match. Now add it to robots
-                robotID = matches.group(1)
-                topic   = matches.group(2)      
                 
-                if robotID not in robots:
-                    # Init robot Dict
-                    robots[robotID] = {}
-                    robots[robotID]["topics"] = {}
-
-                if topic not in robots[robotID]["topics"]:
-                    # Init topic Dict
-                    robots[robotID]["topics"][topic] = {}
-
-                # Get Message Type and convert it to Python-Specific Import
-                topic_type, _, _ = rostopic.get_topic_type(entry)
-                msg_type = topic_type.replace("/", ".msg.")
-
-                # Set it in robots
-                robots[robotID]["topics"][topic]["type"] = pubsub
-                robots[robotID]["topics"][topic]["msg"] = msg_type
+                if entry not in robots:
+                    # if not already added, add it
+                    topic_type, _, _ = rostopic.get_topic_type(entry)
+                    robots[entry] = [topic_type ,pubsub]
 
 
     @staticmethod
-    def removeRobot(robot_name):
+    def removeTopic(topic):
         '''
-            This removes the robot from robots
+            This removes the topic
         '''
         global robots
-        if robot_name in robots:
-            del robots[robot_name]
+        if topic in robots:
+            del robots[topic]
 
 
     @staticmethod

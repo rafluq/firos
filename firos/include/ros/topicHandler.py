@@ -36,14 +36,14 @@ from include.pubsub.genericPubSub import PubSub
 # this Message is needed, for the Listeners on connect on disconnect
 import std_msgs.msg
 
-# Structs whith robotID and each robotID with a topic: 
-# ROS_PUBSUB[robotID][topic] --> returns  rospy Publisher/Subsriber
+# Structs with topic: 
+# ROS_PUBSUB[topic] --> returns  rospy Publisher/Subsriber
 ROS_PUBLISHER = {}
 ROS_SUBSCRIBER_LAST_MESSAGE = {}
 ROS_SUBSCRIBER = {}
 
 # A Struct which is used to minimize the Number of publishes. Here we only
-# save time stamps of ids. LAST_PUBLISH_TIME[robotID/topic] would return a time 
+# save time stamps of ids. LAST_PUBLISH_TIME[topic] would return a time 
 LAST_PUBLISH_TIME = dict()
 
 # Topics in ROS do only have one data-type! 
@@ -68,16 +68,16 @@ def initPubAndSub():
     global CloudPubSub
     CloudPubSub = PubSub()
 
-def loadMsgHandlers(robot_data):
+def loadMsgHandlers(topics_data):
     ''' This method initializes The Publisher and Subscriber for ROS and 
         the Subscribers for the Context-broker (based on ROS-Publishers).
         It also initializes the structs for ROS messages (types, dicts and classes)
 
-        For each robotID with its topic, the ROS message-structs are initialized.
+        For each topic, the ROS message-structs are initialized.
         Then (depending on Publisher or Subscriber) the corrsponding rospy Publisher/Subscriber
         is generated and added in its struct.
 
-        robot_data: The data, as in robots.json specified
+        topics_data: The data, as in topics.json  (and whitelist) specified.
 
         TODO DL maybe change the message loading to something simpler?
     '''
@@ -87,49 +87,39 @@ def loadMsgHandlers(robot_data):
     Log("INFO", "Generating topic handlers:")
 
     # Generate 
+    for topic in topics_data.keys():
+        # for each topic and topic in topics_data:
 
-    for robotID in robot_data.keys(): 
-        for topic in robot_data[robotID]['topics'].keys():
-            # for each robotID and topic in robot_data:
+        # Load specific message from robot_data
+        # TODO DL maybe change this in config to ._type values? Refactor!
+        msg = str(topics_data[topic][0])
+        theclass = LibLoader.loadFromSystem(msg, topic) 
+        
+        # Add specific message in struct to not load it again later.
+        if theclass._type not in ROS_MESSAGE_CLASSES:
+            ROS_MESSAGE_CLASSES[theclass._type] = theclass  # setting Class
 
-            # Load specific message from robot_data
-            # TODO DL maybe change this in config to ._type values? Refactor!
-            msg = str(robot_data[robotID]['topics'][topic]['msg'])
-            theclass = LibLoader.loadFromSystem(msg, robotID, topic)
-            
-            # Add specific message in struct to not load it again later.
-            if theclass._type not in ROS_MESSAGE_CLASSES:
-                ROS_MESSAGE_CLASSES[theclass._type.replace("/", ".")] = theclass  # Replacing '/' with '.' see Obejct-Converter
+        # Create, if not already, a dictionary from the corresponding message-type
+        if topic not in ROS_TOPIC_AS_DICT:
+            ROS_TOPIC_AS_DICT[topic] = rosMsg2Dict(theclass())
+        
+        # Set the topic class-type, which is for each topic always the same
+        ROS_TOPIC_TYPE[topic] = theclass._type
 
-            # Create, if not already, a dictionary from the corresponding message-type
-            if topic not in ROS_TOPIC_AS_DICT:
-                ROS_TOPIC_AS_DICT[topic] = rosMsg2Dict(theclass())
-            
-            # Set the topic class-type, which is for each topic always the same
-            ROS_TOPIC_TYPE[topic] = theclass._type
+        # Create Publisher or Subscriber
+        if topics_data[topic][1].lower() == "subscriber":
+            # Case it is a subscriber, add it in subscribers
+            additionalArgsCallback = {"topic": topic} # Add addtional Infos about topic
+            ROS_SUBSCRIBER[topic] = rospy.Subscriber(topic, theclass, _publishToCBRoutine, additionalArgsCallback)
+            ROS_SUBSCRIBER_LAST_MESSAGE[topic] = None # No message currently published
+        else:
+            # Case it is a publisher, add it in publishers
+            ROS_PUBLISHER[topic] = rospy.Publisher(topic, theclass, queue_size=C.ROS_SUB_QUEUE_SIZE, latch=True)
 
-            # Create Publisher or Subscriber
-            if robot_data[robotID]['topics'][topic]['type'].lower() == "subscriber":
-                # Case it is a subscriber, add it in subscribers
-                if robotID not in ROS_SUBSCRIBER:
-                    ROS_SUBSCRIBER[robotID] = {}
-                    ROS_SUBSCRIBER_LAST_MESSAGE[robotID] = {}
-                    
-                additionalArgsCallback = {"robot": robotID, "topic": topic} # Add addtional Infos about topic and robotID 
-                ROS_SUBSCRIBER[robotID][topic] = rospy.Subscriber(robotID + "/" + topic, theclass, _publishToCBRoutine, additionalArgsCallback)
-                ROS_SUBSCRIBER_LAST_MESSAGE[robotID][topic] = None # No message currently published
-            else:
-                # Case it is a publisher, add it in publishers
-                if robotID not in ROS_PUBLISHER:
-                    ROS_PUBLISHER[robotID] = {}
-                    
-                ROS_PUBLISHER[robotID][topic] = rospy.Publisher(robotID + "/" + topic, theclass, queue_size=C.ROS_SUB_QUEUE_SIZE, latch=True)
-
-        # After initializing ROS-PUB/SUBs, intitialize ContextBroker-Subscriber based on ROS-Publishers for each robot
-        if robotID in ROS_PUBLISHER:
-            CloudPubSub.subscribe(str(robotID), ROS_PUBLISHER[robotID].keys(), ROS_TOPIC_TYPE, ROS_TOPIC_AS_DICT) 
-            Log("INFO", "\n")
-            Log("INFO", "Subscribed to " + robotID + "'s topics\n")
+    # After initializing ROS-PUB/SUBs, intitialize ContextBroker-Subscriber based on ROS-Publishers for each robot
+    CloudPubSub.subscribe(ROS_PUBLISHER.keys(), ROS_TOPIC_TYPE, ROS_TOPIC_AS_DICT)  
+    Log("INFO", "\n")
+    Log("INFO", "Subscribed to " + str(ROS_PUBLISHER.keys()) + "\n")
 
 
 def _publishToCBRoutine(data, args):
@@ -143,17 +133,16 @@ def _publishToCBRoutine(data, args):
         args: additional arguments we set prior
     '''
     if not SHUTDOWN_SIGNAL:
-        robot = args['robot']
         topic = args['topic'] # Retreiving additional Infos, which were set on initialization 
     
         t = time.time() * 1000 # Get Millis
-        if (robot+topic) in LAST_PUBLISH_TIME and LAST_PUBLISH_TIME[robot+topic] >= t:
+        if topic in LAST_PUBLISH_TIME and LAST_PUBLISH_TIME[topic] >= t:
             # Case: We want it to publish again, but we did not wait PUB_FREQUENCY milliseconds
             return 
 
-        CloudPubSub.publish(robot, topic, data, ROS_TOPIC_AS_DICT)
-        ROS_SUBSCRIBER_LAST_MESSAGE[robot][topic] = data
-        LAST_PUBLISH_TIME[robot + "/" + topic] = t + C.PUB_FREQUENCY
+        CloudPubSub.publish(topic, data, ROS_TOPIC_AS_DICT) 
+        ROS_SUBSCRIBER_LAST_MESSAGE[topic] = data
+        LAST_PUBLISH_TIME[topic] = t + C.PUB_FREQUENCY
 
 
 
@@ -166,22 +155,21 @@ class RosTopicHandler:
 
     
     @staticmethod
-    def publish(robotID, topic, convertedData, dataStruct):
+    def publish(topic, convertedData, dataStruct):
         ''' This method publishes the receive data from the 
             ContextBroker to ROS
 
-            robotID: The Robot-Id
             topic: The topic to be published
             convertedData: the converted data from the Subscriber
             dataStruct: The struct of convertedData, specified by their types
         '''
-        if robotID in ROS_PUBLISHER and topic in ROS_PUBLISHER[robotID]:
-            if topic in ROS_TOPIC_TYPE and ROS_TOPIC_TYPE[topic].replace("/", ".") == dataStruct['type']: 
-                # check if a publisher to this robotID and topic is set 
+        if topic in ROS_PUBLISHER:
+            if topic in ROS_TOPIC_TYPE and ROS_TOPIC_TYPE[topic] == dataStruct['type']: 
+                # check if a publisher to this topic is set 
                 # then check the received and expected type to be equal
                 # Iff, then publish received message to ROS
                 newMsg = instantiateROSMessage(convertedData, dataStruct)
-                ROS_PUBLISHER[robotID][topic].publish(newMsg)
+                ROS_PUBLISHER[topic].publish(newMsg)
 
 
     @staticmethod
@@ -200,9 +188,8 @@ class RosTopicHandler:
         Log("INFO", "Unsubscribing topics...")
         for subscriber in subscribers:
             subscriber.unregister()
-        for robotID in ROS_SUBSCRIBER:
-            for topic in ROS_SUBSCRIBER[robotID]:
-                ROS_SUBSCRIBER[robotID][topic].unregister()
+        for topic in ROS_SUBSCRIBER:
+            ROS_SUBSCRIBER[topic].unregister()
         Log("INFO", "Unsubscribed topics\n")
 
 
@@ -220,9 +207,7 @@ def instantiateROSMessage(obj, dataStruct):
         
         # Load Message-Class only if not already loaded!
         if dataStruct['type'] not in ROS_MESSAGE_CLASSES:
-            msgType = dataStruct['type'].split(".") # see Fiware-Object-Converter, explicit Types of ROS-Messages are retreived from there 
-            moduleLoader = importlib.import_module(msgType[0] + ".msg")
-            msgClass = getattr(moduleLoader, msgType[1])
+            msgClass = LibLoader.loadFromSystem(dataStruct['type'], None)
             ROS_MESSAGE_CLASSES[dataStruct['type']] = msgClass
         #instantiate Message
         instance = ROS_MESSAGE_CLASSES[dataStruct['type']]()
@@ -291,22 +276,24 @@ def createConnectionListeners():
 
 
 def _robotDisconnection(data):
-    ''' Unregisters from a given robotID by a ROBOT
+    ''' Unregisters from a given topic
 
         data: The String which was sent to firos
     '''
-    robotID = str(data.data)
+    topic = str(data.data)
 
-    Log("INFO", "Disconnected robot: " + robotID)
-    if robotID in ROS_PUBLISHER:
-        for topic in ROS_PUBLISHER[robotID]:
-            ROS_PUBLISHER[robotID][topic].unregister()
-        del ROS_PUBLISHER[robotID]
+    
+    if topic in ROS_PUBLISHER:
+        for topic in ROS_PUBLISHER[topic]:
+            ROS_PUBLISHER[topic][topic].unregister()
+        Log("INFO", "Disconnected publisher for: " + topic)
+        del ROS_PUBLISHER[topic]
 
-    if robotID in ROS_SUBSCRIBER:
-        for topic in ROS_SUBSCRIBER[robotID]:
-            ROS_SUBSCRIBER[robotID][topic].unregister()
-        del ROS_SUBSCRIBER[robotID]
+    if topic in ROS_SUBSCRIBER:
+        for topic in ROS_SUBSCRIBER[topic]:
+            ROS_SUBSCRIBER[topic][topic].unregister()
+        Log("INFO", "Disconnected subscriber for: " + topic)
+        del ROS_SUBSCRIBER[topic]
 
 
 def _robotConnection(data):

@@ -103,33 +103,19 @@ def getAction(path, method):
 
 ###############################################################################
 #############################   Request Mapping   #############################
-###############################################################################
+############################################################################### 
 
-def listRobots(request, action):
-    ''' Generates a list of all robots (depending on RosConfigurator, confManager)
+def listTopics(request, action):
+    ''' Generates a list of all topics (depending on RosConfigurator, confManager)
         and returns them back as json
-
-        TODO DL, currently a List of containing 'topics' with a list of topics is returned
-        Better would be a list of robotIds with their corresponding topics and types
     '''
     robots = getRobots(False)
     data = []
-    for robot_name in robots.keys():
-        robot_data = {"name": robot_name, "topics": []}
-        robot = robots[robot_name]
-        for topic_name in robot["topics"]:
-            topic = robot["topics"][topic_name]
-            topic_data = {
-                "name": topic_name,
-                "pubsub": topic["type"]
-            }
-            if type(topic["msg"]) is dict:
-                topic_data["type"] = "Custom"
-                topic_data["structure"] = topic["msg"]
-            else:
-                topic_data["type"] = topic["msg"]
-                topic_data["structure"] = ROS_TOPIC_AS_DICT[topic_name]
-            robot_data["topics"].append(topic_data)
+    for topic in robots.keys():
+        robot_data = {"topic": topic, 
+                    "pubSub": robots[topic][1], 
+                    "messageType": robots[topic][0] }
+        robot_data["structure"] = ROS_TOPIC_AS_DICT[topic]
         data.append(robot_data)
 
     # Return data and success
@@ -143,12 +129,19 @@ def onRobotData(request, action):
         Depending what is written after 'robot', specific content is published
     '''
 
-    name = request.path[7:]
-    lastPubData = ROS_SUBSCRIBER_LAST_MESSAGE[name]
-    lastPubData["type"] = C.CONTEXT_TYPE
-    lastPubData["id"] = name
+    name = request.path[6:]
+    if name in ROS_SUBSCRIBER_LAST_MESSAGE:
+        lastPubData = ROS_SUBSCRIBER_LAST_MESSAGE[name]
+        obj = {s: getattr(lastPubData, s, None) for s in lastPubData.__slots__}
+        obj["id"] = name
+        obj["type"] = lastPubData._type
 
-    json = ObjectFiwareConverter.obj2Fiware(lastPubData, dataTypeDict=ROS_TOPIC_AS_DICT,ignorePythonMetaData=True, ind=0)
+
+        json = ObjectFiwareConverter.obj2Fiware(obj, dataTypeDict=ROS_TOPIC_AS_DICT,ignorePythonMetaData=True, ind=0)
+    else:
+        json = {}
+
+    
 
     # Return the Information provided by the Context-Broker
     end_request(request, ('Content-Type', 'application/json'), 200, json)
@@ -160,7 +153,7 @@ def onConnect(request, action):
         TODO DL reset, instead of connect?
         TODO DL Add real connect for only one Robot?
     '''
-    Log("INFO", "Connecting robots")
+    Log("INFO", "Connecting topics")
     loadMsgHandlers(RosConfigurator.systemTopics(True))
 
     # Return Success
@@ -183,59 +176,37 @@ def onDisConnect(request, action):
         partURL = partURL[:-1]
 
     # Get ROBOT_ID, which is the last element
-    robotID = partURL.split("/")[-1]
+    topic = partURL[11:] # Get everything after "/disconnect"
 
 
-    Log("INFO", "Disconnecting robot '{}'".format(robotID))
-    # Iterate through every topic and unregister, then delete it
-    if robotID in ROS_PUBLISHER:
-        for topic in ROS_PUBLISHER[robotID]:
-            ROS_PUBLISHER[robotID][topic].unregister()
-        del ROS_PUBLISHER[robotID]
-        RosConfigurator.removeRobot(robotID)
     
-    if robotID in ROS_SUBSCRIBER:
-        for topic in ROS_SUBSCRIBER[robotID]:
-            ROS_SUBSCRIBER[robotID][topic].unregister()
-        del ROS_SUBSCRIBER[robotID]
-        RosConfigurator.removeRobot(robotID)
+    # Iterate through every topic and unregister, then delete it
+    if topic in ROS_PUBLISHER:
+        ROS_PUBLISHER[topic].unregister()
+        del ROS_PUBLISHER[topic]
+        Log("INFO", "Disconnecting publisher on '{}'".format(topic))
+        RosConfigurator.removeTopic(topic)
+    
+    if topic in ROS_SUBSCRIBER:
+        ROS_SUBSCRIBER[topic].unregister()
+        del ROS_SUBSCRIBER[topic]
+        Log("INFO", "Disconnecting subscriber on '{}'".format(topic))
+        RosConfigurator.removeTopic(topic)
     
     # Return success
     end_request(request, None, 200, "")
 
 
 
-### The below Operations are no longer maintained.
-def onWhitelistWrite(request, action):
-    data = getPostParams(request)
-    RosConfigurator.setWhiteList(data, None)
-    end_request(request, None, 200, "")
-
-
-def onWhitelistRemove(request, action):
-    data = getPostParams(request)
-    RosConfigurator.setWhiteList(None, data)
-    end_request(request, None, 200, "")
-
-
-def onWhitelistRestore(request, action):
-    RosConfigurator.setWhiteList(None, None, True)
-    end_request(request, None, 200, "")
-### The above Operations are no longer maintained
-
-
-
 # Mapper to the methods 
 MAPPER = {
     "GET": [
-        {"regexp": "^/robots/*$", "action": listRobots},
-        {"regexp": "^/robot/.*$", "action": onRobotData}],
+        {"regexp": "^/topics/*$", "action": listTopics},
+        {"regexp": "^/topic/.*$", "action": onRobotData}],
     "POST": [
-        {"regexp": "^/robot/connect/*$", "action": onConnect},
-        {"regexp": "^/robot/disconnect/(\w+)/*$", "action": onDisConnect},
-        {"regexp": "^/whitelist/write/*$", "action": onWhitelistWrite},
-        {"regexp": "^/whitelist/remove/*$", "action": onWhitelistRemove},
-        {"regexp": "^/whitelist/restore/*$", "action": onWhitelistRestore}]
+        {"regexp": "^/connect/*$", "action": onConnect},
+        {"regexp": "^/disconnect/.*$", "action": onDisConnect}
+    ]
 }
 
 

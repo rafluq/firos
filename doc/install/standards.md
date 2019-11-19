@@ -65,7 +65,7 @@ class SomeExamplePublisher(Publisher):
     def __init__(self):
       pass
 
-    def publish(self, robotID, topic, rawMsg, msgDefinitions):
+    def publish(self, topic, rawMsg, msgDefinitions):
         pass
 
     def unpublish(self):
@@ -96,7 +96,7 @@ class SomeExampleSubscriber(Subscriber):
     def __init__(self):
       pass
 
-    def subscribe(self, robotID, topicList, msgDefinitions):
+    def subscribe(self, topicList, msgDefinitions):
         pass
 
     def unsubscribe(self):
@@ -117,7 +117,7 @@ The received Messages need to be converted into a special class which can be dir
 After the received Message is converted correctly, you can publish it via:
 
 ```python
-RosTopicHandler.publish(robotID, topic, convertedData, dataStruct):
+RosTopicHandler.publish(topic, convertedData, dataStruct):
 ```
 
 and it should be published in the ROS-World automatically!

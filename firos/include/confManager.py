@@ -35,31 +35,35 @@ def getRobots(refresh=False):
     '''
     try:
         # Retrieves the whitelist.json. If it does not exists, it returns all topics.
-        robots = copy.deepcopy(RosConfigurator.systemTopics(refresh))    
+        topics_regex = copy.deepcopy(RosConfigurator.systemTopics(refresh))     # TODO DL change to topics
         
         # Retrieves the robots.json.
-        robots_json = getRobotsByJson()
-        if len(robots_json) == 0: 
-            Log("ERROR", "The file 'robots.json' is either empty or does not exist!\n\nExiting")
+        topics_json = getTopicsByJson()
+        if len(topics_json) == 0: 
+            Log("ERROR", "The file 'topics.json' is either empty or does not exist!\n\nExiting")
             sys.exit(1)
         
-        # Merge robots.json into whitelist.json (overwrite if neccessary)
-        for robot_name in robots_json:
-            robot_name = str(robot_name)
-            if robot_name not in robots:
-                robots[robot_name] = {
-                    "topics": {}
-                }
-            for topic_name in robots_json[robot_name]["topics"]:
-                topic = robots_json[robot_name]["topics"][topic_name]
+        # check if structure is as needed
+        for key in topics_json.keys():
+            if len(topics_json[key]) != 2:
+                Log("ERROR", "The topic: '{}', does not have a list of length 2 (topics.json)! \n\nExiting".format(key))
+                sys.exit(1)
 
-                # Overwrite or add!
-                robots[robot_name]["topics"][str(topic_name)] = {
-                    "msg": str(topic["msg"]),
-                    "type": str(topic["type"])
-                }
+            if not key.startswith("/"):
+                Log("ERROR", "The topic: '{}', does not start with '/'  (topics.json)! \n\nExiting".format(key))
+                sys.exit(1)
 
-        return robots
+            if topics_json[key][1] not in ["publisher", "subscriber"]:
+                Log("ERROR", "The topic: '{}', does not specify publisher or subscriber (topics.json)! \n\nExiting".format(key))
+                sys.exit(1)
+
+
+        # Merge both dictionaties:
+        # Here topics_json overrides entries in topics_regex:
+        topics_regex.update(topics_json)
+        topics = topics_regex
+
+        return topics
 
     except Exception as e:
         traceback.print_exc()
@@ -67,11 +71,11 @@ def getRobots(refresh=False):
         return {}
 
 
-def getRobotsByJson():
-    ''' Load the 'robots.json'-File 
+def getTopicsByJson():
+    ''' Load the 'topics.json'-File 
     '''
     try:
-        json_path = C.PATH + "/robots.json"
+        json_path = C.PATH + "/topics.json"
         return json.load(open(json_path))
     except:
         return {}

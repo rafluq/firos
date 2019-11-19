@@ -24,7 +24,7 @@ class SomeExampleSubscriber(Subscriber):
 
 
 
-    def subscribe(self, robotID, topicList, topicTypes, msgDefinitions):
+    def subscribe(self, topicList, topicTypes, msgDefinitions):
         '''
             Here goes the Subscription Routine
             This Routine needs to make sure it that it be called somehow from an extern Signal

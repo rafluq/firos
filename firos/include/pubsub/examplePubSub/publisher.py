@@ -22,7 +22,7 @@ class SomeExamplePublisher(Publisher):
         '''
 
 
-    def publish(self, robotID, topic, rawMsg, msgDefinitions):
+    def publish(self, topic, rawMsg, msgDefinitions):
         '''
             Here goes the Routine to publish something.
             It is called automatically!
