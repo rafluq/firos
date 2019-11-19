@@ -2,7 +2,7 @@
 
 FIROS now allows to implement custom standards to do multiple publications of data on multiple platforms with only one
 instance. In order to write a new standard, where the ROS-Messages are transformed in your standard and vice-versa, you
-need to think about following:
+need to think about the following:
 
 -   Think of a name for your standard. In this example we choose `testbroker`
 -   Does your standard need any Configuration to work porperly? A server might need an `address` or `port`. Or if you

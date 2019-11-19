@@ -1,4 +1,4 @@
-# Installion From Scratch With ROS, Orion Context-Broker and catkin
+# Installation From Scratch With ROS, Orion Context-Broker and catkin
 
 To Install Firos you first need to follow this [Installaion Instuctions](http://wiki.ros.org/ROS/Installation). ROS is
 needed for FIROS, since it imports `ROS-messages` and uses other specific `ROS-Executables` like `rospy` or `rostopic`.
@@ -126,7 +126,7 @@ Beginning from the base of this repository, FIROS can be built via docker using:
 > docker build -f ./docker/Dockerfile --tag firos:localbuild .
 
 This will create an image with a pre-configured `config.json` which requires the Orion-ContextBroker. Before running
-this image, you need to specify a `robots.json`. Information on how to create the configuration-files can be found in
+this image, you need to specify a `topics.json`. Information on how to create the configuration-files can be found in
 [Configuration-Files](configuration-files.md) or in the [Turtlesim-Example](turtlesim-example.md). An
 example-pre-configured configuration for docker can be found in `firos/docker/docker-config`
 
@@ -147,7 +147,7 @@ docker run -it --rm --net finet --name orion --link mongodb -p 1026:1026 fiware/
 docker run -it --net finet --name firos \
     -p 10100:10100 \
     --env ROS_MASTER_URI=http://rosmaster:11311 \
-    -v CONFIG_FILE_ROBOTS:/catkin_ws/src/firos/config/robots.json \
+    -v CONFIG_FILE_TOPICS:/catkin_ws/src/firos/config/topics.json \
     -v CONFIG_FILE_WHITELIST:/catkin_ws/src/firos/config/whitelist.json \
     firos:localbuild
 ```

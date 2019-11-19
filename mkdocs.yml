@@ -31,4 +31,5 @@ nav:
         - Upgrading from previous versions: install/upgrade.md
     - Usage: usage.md
     - Deprecated Functionality: deprecated.md
+    - Removed Functionality: removed.md
     - Roadmap: roadmap.md

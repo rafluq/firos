@@ -132,12 +132,13 @@ def onRobotData(request, action):
     name = request.path[6:]
     if name in ROS_SUBSCRIBER_LAST_MESSAGE:
         lastPubData = ROS_SUBSCRIBER_LAST_MESSAGE[name]
-        obj = {s: getattr(lastPubData, s, None) for s in lastPubData.__slots__}
-        obj["id"] = name
-        obj["type"] = lastPubData._type
-
-
-        json = ObjectFiwareConverter.obj2Fiware(obj, dataTypeDict=ROS_TOPIC_AS_DICT,ignorePythonMetaData=True, ind=0)
+        if lastPubData is not None:
+            obj = {s: getattr(lastPubData, s, None) for s in lastPubData.__slots__}
+            obj["id"] = name
+            obj["type"] = lastPubData._type
+            json = ObjectFiwareConverter.obj2Fiware(obj, dataTypeDict=ROS_TOPIC_AS_DICT,ignorePythonMetaData=True, ind=0)
+        else:
+            json = {}
     else:
         json = {}
 

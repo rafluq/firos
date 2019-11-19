@@ -29,33 +29,18 @@ Before executing any commands you need to create two configuration folders. In t
 `whitelist.json` :
 
 ```json
-{
-    "turtle\\w+": {
-        "publisher": ["cmd_vel"],
-        "subscriber": ["pose"]
-    }
-}
+{}
 ```
 
 **NOTE** `config.json`: The Context-Broker runs locally, so the configuration should be fine for you, as long as your
 Context-Broker is also locally.
 
-Inside `config_1` we add the file `robots.json` with the following content:
+Inside `config_1` we add the file `topics.json` with the following content:
 
 ```json
 {
-    "turtle1": {
-        "topics": {
-            "cmd_vel": {
-                "msg": "geometry_msgs.msg.Twist",
-                "type": "publisher"
-            },
-            "pose": {
-                "msg": "turtlesim.msg.Pose",
-                "type": "subscriber"
-            }
-        }
-    }
+    "/turtle1/cmd_vel": ["geometry_msgs/Twist", "publisher"],
+    "/turtle1/pose": ["turtlesim/Pose", "subscriber"]
 }
 ```
 
@@ -63,18 +48,8 @@ and for `config_2` the following swapped content:
 
 ```json
 {
-    "turtle1": {
-        "topics": {
-            "cmd_vel": {
-                "msg": "geometry_msgs.msg.Twist",
-                "type": "subscriber"
-            },
-            "pose": {
-                "msg": "turtlesim.msg.Pose",
-                "type": "publisher"
-            }
-        }
-    }
+    "/turtle1/cmd_vel": ["geometry_msgs/Twist", "subscriber"],
+    "/turtle1/pose": ["turtlesim/Pose", "publisher"]
 }
 ```
 
@@ -84,11 +59,11 @@ Executing `tree` should give you the follwing structure:
 .
 ├── config_1
 │   ├── config.json
-│   ├── robots.json
+│   ├── topics.json
 │   └── whitelist.json
 └── config_2
     ├── config.json
-    ├── robots.json     # Publisher/Subscriber should be swapped here
+    ├── topics.json     # Publisher/Subscriber should be swapped here
     └── whitelist.json
 
 ```
@@ -180,9 +155,13 @@ Turtlesim is stopped and you can observe that the two FIROS-Instances are still 
 
 ![Demonstration](../media/turtlesim_example.gif)
 
+**Note:** The small Demonstration above uses the old configuration files (`robots.json`), which was redesigned into
+`topics.json`. Also, newer Versions of the Orion Context-Broker do not send updates to Firos, when no data changed.
+
 ## Troubleshooting:
 
 ### No Messages are sent between the two FIROS-instances
 
 If this is the case. Please check your firewall-configuration (or disable the firewall temporarily, for a quick sanity
-check)
+check). It can also be a Orion Context-Broker version, which does not send an update to the second firos instance. In
+this case, the message is only sent ones.
