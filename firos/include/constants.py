@@ -35,8 +35,7 @@ class Constants:
     EP_SERVER_ADRESS = None
     EP_SERVER_PORT = None
     MAP_SERVER_PORT = 10100
-    ROSBRIDGE_PORT = 9090
-    CONTEXT_TYPE = "ROBOT"   
+    ROSBRIDGE_PORT = 9090 
     PUB_FREQUENCY = 0               # In Milliseconds
 
     ROS_NODE_NAME = "firos"
@@ -70,9 +69,6 @@ class Constants:
             
             if "ros_subscriber_queue" in configData:
                 cls.ROS_SUB_QUEUE_SIZE = int(configData["ros_subscriber_queue"])
-
-            if "context_type" in configData:
-                cls.CONTEXT_TYPE = configData["context_type"]
 
             if "endpoint" in configData and "address" in configData["endpoint"]:
                     cls.EP_SERVER_ADRESS = configData["endpoint"]["address"]
