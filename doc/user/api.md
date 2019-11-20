@@ -35,6 +35,8 @@ Get topics handled by FIROS with their corresponding _topics_. Each _topic_ cont
 
 Gets the data which is published by the topic to e.g the Context-Broker.
 
+Topics, which are retrieved by the Non-ROS-World (`publisher`) are not visible here.
+
 Here as an example for `/topic/turtle1/pose`: the content of `/turtle1/pose`:
 
 ```json

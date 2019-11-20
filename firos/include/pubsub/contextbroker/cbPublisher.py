@@ -98,7 +98,7 @@ class CbPublisher(Publisher):
             obj = {s: getattr(rawMsg, s, None) for s in rawMsg.__slots__}
             obj["type"] = rawMsg._type.replace("/", ".") # OCB Specific!!
             obj["id"] = (topic).replace("/", ".") # OCB Specific!!
-            jsonStr = ObjectFiwareConverter.obj2Fiware(obj, ind=0, dataTypeDict=msgDefintionDict,  ignorePythonMetaData=True)
+            jsonStr = ObjectFiwareConverter.obj2Fiware(obj, ind=None, dataTypeDict=msgDefintionDict[topic],  ignorePythonMetaData=True)
             response = requests.post(self.CB_BASE_URL, data=jsonStr, headers=self.CB_HEADER)
             self._responseCheck(response, attrAction=0, topEnt=topic)
             return
@@ -110,7 +110,7 @@ class CbPublisher(Publisher):
         obj = {s: getattr(rawMsg, s, None) for s in rawMsg.__slots__}
         obj["type"] = rawMsg._type.replace("/", ".") # OCB Specific!!
         obj["id"] = (topic).replace("/", ".") # OCB Specific!!
-        jsonStr = ObjectFiwareConverter.obj2Fiware(obj, ind=0, dataTypeDict=msgDefintionDict,  ignorePythonMetaData=True, showIdValue=False) 
+        jsonStr = ObjectFiwareConverter.obj2Fiware(obj, ind=0, dataTypeDict=msgDefintionDict[topic],  ignorePythonMetaData=True, showIdValue=False) 
 
         # Update attribute on ContextBroker
         response = requests.post(self.CB_BASE_URL + obj["id"] + "/attrs", data=jsonStr, headers=self.CB_HEADER)

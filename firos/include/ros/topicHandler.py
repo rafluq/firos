@@ -119,7 +119,7 @@ def loadMsgHandlers(topics_data):
     # After initializing ROS-PUB/SUBs, intitialize ContextBroker-Subscriber based on ROS-Publishers for each robot
     CloudPubSub.subscribe(ROS_PUBLISHER.keys(), ROS_TOPIC_TYPE, ROS_TOPIC_AS_DICT)  
     Log("INFO", "\n")
-    Log("INFO", "Subscribed to " + str(ROS_PUBLISHER.keys()) + "\n")
+    Log("INFO", "Subscribed to " + str(list(ROS_PUBLISHER.keys())) + "\n")
 
 
 def _publishToCBRoutine(data, args):

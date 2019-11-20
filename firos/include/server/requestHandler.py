@@ -136,11 +136,11 @@ def onRobotData(request, action):
             obj = {s: getattr(lastPubData, s, None) for s in lastPubData.__slots__}
             obj["id"] = name
             obj["type"] = lastPubData._type
-            json = ObjectFiwareConverter.obj2Fiware(obj, dataTypeDict=ROS_TOPIC_AS_DICT,ignorePythonMetaData=True, ind=0)
+            json = ObjectFiwareConverter.obj2Fiware(obj, dataTypeDict=ROS_TOPIC_AS_DICT[name], ignorePythonMetaData=True, ind=None)
         else:
-            json = {}
+            json = ""
     else:
-        json = {}
+        json = ""
 
     
 

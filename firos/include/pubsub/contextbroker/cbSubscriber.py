@@ -229,7 +229,7 @@ class CbSubscriber(Subscriber):
             "http": {
                 "url": "http://{}:{}".format(C.EP_SERVER_ADRESS, self.server.port)
             },
-            "attrs": msgDefintions[topic].keys()
+            "attrs": list(msgDefintions[topic].keys())
             },
             "expires": time.strftime("%Y-%m-%dT%H:%M:%S.00Z", time.gmtime(time.time() + self.data["subscription"]["subscription_length"])), # ISO 8601
             "throttling": self.data["subscription"]["throttling"]  
