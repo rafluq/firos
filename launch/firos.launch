@@ -1,9 +1,9 @@
 <launch>
-  <arg name="config_path" default="$(find firos)/config" />
+  <arg name="some_path" default="$(find firos)/config" />
 
   <arg name="node_name" default="firos" />
 
-  <node name="$(arg node_name)" pkg="firos" type="core.py" output="screen">
-    <param name="config_path" value="$(arg config_path)" />
+  <node name="$(arg node_name)" pkg="firos" type="core.py" output="screen" args="--conf $(arg some_path)">
+    <param name="some_path" value="$(arg some_path)" />
   </node>
 </launch>

@@ -1,8 +1,8 @@
 # Configuration-Files
 
-FIROS needs 3 different configuration files inside the Configuration-Folder. An example Configuration-Folder can be
-found in the `config`-Folder at the base of this repository. It needs to contain the files `config.json`, `robots.json`
-and `whitelist.json` (optionally: `robotdescriptions.json`).
+FIROS needs 2 different configuration files inside the Configuration-Folder. An example Configuration-Folder can be
+found in the `config`-Folder at the base of this repository. It needs to contain the files `config.json` and
+`topics.json` (optionally: `whitelist.json`).
 
 In the follwing each of the configuration files are explained in detail:
 
@@ -35,6 +35,10 @@ configuration as shown in the following example:
                 "subscription_refresh_delay": 0.9
             }
         },
+        "endpoint": {
+            "address": "10.16.55.3",
+            "port": 1234
+        },
         "log_level": "INFO"
     }
 }
@@ -44,17 +48,16 @@ We also added here the contextbroker configuration, since we want to publish and
 
 Here is the list of all currently possibilities for a configuration:
 
-| Attribute              | Value                                                                                                                                                      | Required |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: |
-| "endpoint"             | An object, which can have an `address` and a `port`. If the Address differs, where FIROS should get the notifications from, then at this here.             |          |
-| "log_level"            | Can be either `"INFO"` (Default), `"DEBUG"`, `"WARNING"`, `"ERROR"` or `"CRITICAL"`.                                                                       |          |
-| "node_name"            | This sets the ROS-Node-Name for this FIROS instance. The default is `"firos"`.                                                                             |          |
-| "ros_subscriber_queue" | The queue-size of the `rospy.Publisher`. See more [here](http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers). Default is `10`               |          |
-| "context_type"         | This sets the context type of an entity (the `type`-value of the base-entity). Default is `"ROBOT"` but can be changed if necessary                        |          |
-| "rosbridge_port"       | Changes the ROS-Port, where to listen. Default is `9090`                                                                                                   |          |
-| "server"               | An object `{}` which contains the attribute `"port"`                                                                                                       |          |
-| "contextbroker"        | An object `{}` which contains the attributes `"adress"`, `"port"` and `"subscriptions"`                                                                    |    x     |
-| "pub_frequency"        | An Integer of Milliseconds. This limits the number of publishes e.g. to the Context-Broker. This blocks the next publish for `pub_frequency` milliseconds. |          |
+| Attribute              | Value                                                                                                                                                      |                        Required                         |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | :-----------------------------------------------------: |
+| "endpoint"             | An object, which can have an `address` and a `port`. If the Address differs, where FIROS should get the notifications from, then add this here.            |                                                         |
+| "log_level"            | Can be either `"INFO"` (Default), `"DEBUG"`, `"WARNING"`, `"ERROR"` or `"CRITICAL"`.                                                                       |                                                         |
+| "node_name"            | This sets the ROS-Node-Name for this FIROS instance. The default is `"firos"`.                                                                             |                                                         |
+| "ros_subscriber_queue" | The queue-size of the `rospy.Publisher`. See more [here](http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers). Default is `10`               |                                                         |
+| "rosbridge_port"       | Changes the ROS-Port, where to listen. Default is `9090`                                                                                                   |                                                         |
+| "server"               | An object `{}` which contains the attribute `"port"`                                                                                                       |                                                         |
+| "contextbroker"        | An object `{}` which contains the attributes `"adress"`, `"port"` and `"subscriptions"`                                                                    | (`x`, firos should at least know where to publish data) |
+| "pub_frequency"        | An Integer of Milliseconds. This limits the number of publishes e.g. to the Context-Broker. This blocks the next publish for `pub_frequency` milliseconds. |                                                         |
 
 ### `"server"`-Configuration
 
@@ -85,22 +88,12 @@ Information about the `cmd_vel` (`Twist`-Information), its data is published int
 
 ```json
 {
-    "turtle1": {
-        "topics": {
-            "cmd_vel": {
-                "msg": "geometry_msgs.msg.Twist",
-                "type": "publisher"
-            },
-            "pose": {
-                "msg": "turtlesim.msg.Pose",
-                "type": "subscriber"
-            }
-        }
-    }
+    "/turtle1/cmd_vel": ["geometry_msgs/Twist", "publisher"],
+    "/turtle1/pose": ["turtlesim/Pose", "subscriber"]
 }
 ```
 
-This json in particular listens to the rostopic `/turtle1/pose` with the message type `"turtlesim.msg.Pose"` (the
+This json in particular listens to the rostopic `/turtle1/pose` with the message type `"turtlesim/Pose"` (the
 corresponding python message from `turtlesim/Pose`) and sends all retreived data to the specified server in the
 Non-ROS-World. It publishes data into `/turtle1/cmd_vel` after receiving a notifcation of the server from the
 Non-ROS-World from type `geometry_msgs/Twist`.
@@ -115,31 +108,6 @@ from the green arrows, which happens automatically.
 You do not have to specify `publisher` and `subscriber` of all available topics or at all for a robot. Only specify the
 needed ones, which need to be displayed from/or need to obtain information on the Non-ROS-World
 
-```json
-{
-    "ROBOT_ID": {
-        "topics": {
-            "TOPIC_1": {
-                "msg": "PYTHON_REPRESENTATION_MESSAGE_TYPE",
-                "type": "publisher"
-            },
-            "TOPIC_2": {
-                "msg": "PYTHON_REPRESENTATION_MESSAGE_TYPE",
-                "type": "subscriber"
-            }
-        }
-    },
-    "ROBOT_ID_2": {
-        "topics": {
-            "TOPIC_1": {
-                "msg": "PYTHON_REPRESENTATION_MESSAGE_TYPE",
-                "type": "subscriber"
-            }
-        }
-    }
-}
-```
-
 The Information given by the `robots.json` is appended/replaced to the `whitelist.json` which is described below.
 
 ---
@@ -147,26 +115,29 @@ The Information given by the `robots.json` is appended/replaced to the `whitelis
 ## `whitelist.json`
 
 As the name suggests, the `whitelist.json` functions as a whitelist to let FIROS know which messages it should keep
-track of. Given an environment where already ROS-Applications are running, FIROS will automatically subscribe to all
-available topics if no `whitelist.json` is given. In a small ROS-World with few ROS-Applications, this can be desirable.
+track of. Given an environment where already ROS-Applications are running, FIROS will not automatically subscribe to all
+available topics if no `whitelist.json` is given. In a small ROS-World with few ROS-Applications, it can be desirable to
+subscribe to all topics. This can be achieved via:
+
+```json
+{
+    "publisher": [],
+    "subscriber": [".*"]
+}
+```
+
 But this can cause problems in a ROS-World, where many ROS-Applications are running. To let FIROS only subscribe to
 specific topics, the following configuration can be used:
 
 ```json
 {
-    "turtle2": {
-        "publisher": ["cmd_vel"],
-        "subscriber": ["pose"]
-    }
+    "publisher": [".*/pose"],
+    "subscriber": [".*/cmd_vel"]
 }
 ```
 
-This only allows FIROS to subscribe/publish to `"/turtle2/pose"` and `"turtle2/cmd_vel"` plus the extra-configuration
-given in `robots.json` which in the above example would also be `"/turtle1/pose"` and `"turtle1/cmd_vel"`.
-
-**Note**, that an empty configuration of `whitelist.json` (`-> {}`) will also behave as an
-non-existent-configuration-file. Usually for normal usecases, the `whitelist.json` contains the same information as the
-`robots.json` and should be sufficient.
+This only allows FIROS to subscribe/publish to specific topics plus the extra-configuration given in `robots.json` which
+in the above example would also be `"/turtle1/pose"` and `"/turtle1/cmd_vel"`.
 
 **Note:** The FIROS only captures running ROS-Applications at the startup. All applications started after FIROS will not
 be recognized.
@@ -175,55 +146,5 @@ be recognized.
 Message-Type. However, the "Message-Implementation" still needs to be present locally at the FIROS-Instance (via the
 `msgs`-Folder, or compiled by catkin)
 
-The `whitelist.json` also supports Regular Expressions (Regex), so you can refer to more Robots and Topics in just a few
-lines.
-
-Here we address all `turtle[a-zA-Z0-9]+` and `robot[a-zA-Z0-9]+` Robots with their topics:
-
-```json
-{
-    "turtle\\w+": {
-        "publisher": ["cmd_vel"],
-        "subscriber": ["pose"]
-    },
-    "robot\\w+": {
-        "publisher": ["cmd_vel.*teleop", ".*move_base/goal", ".*move_base/cancel"],
-        "subscriber": [".*move_base/result"]
-    }
-}
-```
-
----
-
-## `robotdescriptions.json`
-
-This configuration is optional and just appends additional information into the Non-ROS-World if even implemented.
-
-E. g. The Context-Broker puts them under the `"descriptions"`-attribute. Those can be Links/Strings or maybe some
-'static' values you need to have present for a robot/topic.
-
-It can look like this:
-
-```json
-{
-    "turtle1": {
-        "descriptions": [
-            "http://wiki.ros.org/ROS/Tutorials/UsingRxconsoleRoslaunch",
-            "http://wiki.ros.org/ROS/Tutorials/UnderstandingNodes"
-        ]
-    }
-}
-```
-
-Or like this:
-
-```json
-{
-    "turtle1": {
-        "descriptions": {
-            "MySanatiyValue": 42,
-            "SomeReferenceLink": "http://wiki.ros.org/ROS/Tutorials/UnderstandingNodes"
-        }
-    }
-}
-```
+The `whitelist.json` also supports more complex Regular Expressions (Regex), so you can refer to more topics in just a
+few lines.

@@ -47,7 +47,7 @@ class Publisher(ABC):
     configData = dict()
 
     @abc.abstractmethod
-    def publish(self, robotID, topic, rawMsg, msgDefinitions):
+    def publish(self, topic, rawMsg, msgDefinitions):
         pass
     
     @abc.abstractmethod
@@ -66,7 +66,7 @@ class Subscriber(ABC):
     configData = dict()
 
     @abc.abstractmethod
-    def subscribe(self, robotID, topicList, msgDefinitions):
+    def subscribe(self, topicList, topicTypes, msgDefinitions):
         pass
     
     @abc.abstractmethod
@@ -151,12 +151,12 @@ class PubSub(object):
             return None
 
 
-    def publish(self, robotID, topic, rawMsg, msgDefinitions):
+    def publish(self, topic, rawMsg, msgDefinitions):
         '''
             Call publish on each Publisher
         '''
         for pub in self.publishers:
-            pub.publish(robotID, topic, rawMsg, msgDefinitions)
+            pub.publish(topic, rawMsg, msgDefinitions)
 
     
     def unpublish(self):
@@ -166,12 +166,12 @@ class PubSub(object):
         for pub in self.publishers:
             pub.unpublish()
 
-    def subscribe(self, robotID, topicList, msgDefinitions):
+    def subscribe(self, topicList, topicTypes, msgDefinitions):
         '''
             Call subscribe on each Subscriber
         '''
         for sub in self.subscribers:
-            sub.subscribe(robotID, topicList, msgDefinitions)
+            sub.subscribe(topicList, topicTypes, msgDefinitions)
     
     def unsubscribe(self):
         '''

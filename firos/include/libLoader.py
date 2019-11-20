@@ -36,7 +36,7 @@ class LibLoader:
         the class could not be generated), this LibLoader tries to load the message via
         roslib. If every method fails FIROS will shutdown, since FIROS need the messages
         due to rospy beforehand. At least for The Subscriptions and Publishes defined in
-        'robots.json'
+        'topics.json'
     '''
 
     # Our custom search path for genpy
@@ -114,20 +114,14 @@ class LibLoader:
 
 
     @staticmethod
-    def loadFromSystem(msgType, robotID, topic):
+    def loadFromSystem(msgType, topic):
         ''' This actually tries all three methods mentioned above.
-
-            Remark: If the regex does not find a match, we are also not able
-                    to parse the Configuration-File ('robots.json') and exit.
         '''
-        matches = re.search(regex, msgType) # get (PACKAGE).(msg).(MSGTYPE)
+        splits = msgType.split("/")
 
-        if matches is not None:
-            # We have a Match, we can start to get the Message now!
-            module_name = str(matches.group(1)) + str(matches.group(2))[:-4] # PACKAGE + '.msg'
-            modules = str(matches.group(3)).split(".") # MSGTYPE
-            modules = modules[1: len(modules)]
-            module_msg = modules[0]
+        if len(splits) == 2:
+            module_name = splits[0] # PACKAGE
+            module_msg = splits[1] # MESSAGE
 
 
             #####  1: Try to load it via Python-Import
@@ -167,7 +161,7 @@ class LibLoader:
                 LibLoader.isGenerated = True
                 module = imp.load_source(module_msg, msgsFold + module_name + "/_" + module_msg + ".py")
                 clazz = getattr(module, module_msg)
-                Log("INFO", "Message {}/{}.msg succesfully loaded.".format(module_name, module_msg))
+                Log("INFO", "Message {}/{} succesfully loaded.".format(module_name, module_msg))
                 return clazz 
 
 
@@ -176,10 +170,10 @@ class LibLoader:
             try:
                 import roslib.message
                 import rostopic
-                type_name = rostopic.get_topic_type('/{}/{}'.format(robotID, topic), blocking=False)[0]
+                type_name = rostopic.get_topic_type(topic, blocking=False)[0]
                 if type_name:
                     clazz = roslib.message.get_message_class(type_name)
-                    Log("INFO", "Message {}/{}.msg loaded via roslib.message!".format(module_name, module_msg))
+                    Log("INFO", "Message {}/{} loaded via roslib.message!".format(module_name, module_msg))
                     return clazz
             except Exception:    
                 pass

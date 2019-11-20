@@ -2,7 +2,7 @@
 
 FIROS now allows to implement custom standards to do multiple publications of data on multiple platforms with only one
 instance. In order to write a new standard, where the ROS-Messages are transformed in your standard and vice-versa, you
-need to think about following:
+need to think about the following:
 
 -   Think of a name for your standard. In this example we choose `testbroker`
 -   Does your standard need any Configuration to work porperly? A server might need an `address` or `port`. Or if you
@@ -65,7 +65,7 @@ class SomeExamplePublisher(Publisher):
     def __init__(self):
       pass
 
-    def publish(self, robotID, topic, rawMsg, msgDefinitions):
+    def publish(self, topic, rawMsg, msgDefinitions):
         pass
 
     def unpublish(self):
@@ -96,7 +96,7 @@ class SomeExampleSubscriber(Subscriber):
     def __init__(self):
       pass
 
-    def subscribe(self, robotID, topicList, msgDefinitions):
+    def subscribe(self, topicList, msgDefinitions):
         pass
 
     def unsubscribe(self):
@@ -117,7 +117,7 @@ The received Messages need to be converted into a special class which can be dir
 After the received Message is converted correctly, you can publish it via:
 
 ```python
-RosTopicHandler.publish(robotID, topic, convertedData, dataStruct):
+RosTopicHandler.publish(topic, convertedData, dataStruct):
 ```
 
 and it should be published in the ROS-World automatically!

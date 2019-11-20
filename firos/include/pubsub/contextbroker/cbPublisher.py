@@ -45,9 +45,8 @@ class CbPublisher(Publisher):
     '''
 
     # Keeps track of the posted Content on the ContextBroker
-    # via posted_history[ROBOT_ID][TOPIC] 
+    # via posted_history[ROBOT_ID + "/" + TOPIC] 
     posted_history = {}
-    definitionDict = {}
     CB_HEADER = {'Content-Type': 'application/json'}
     CB_BASE_URL = None
 
@@ -74,12 +73,11 @@ class CbPublisher(Publisher):
         self.CB_BASE_URL = "http://{}:{}/v2/entities/".format(data["address"], data["port"])
 
 
-    def publish(self, robotID, topic, rawMsg, msgDefintionDict):
+    def publish(self, topic, rawMsg, msgDefintionDict):
         ''' This is the actual publish-Routine which updates and creates Entities on the
             ContextBroker. It also keeps track via posted_history on already posted entities and topics
 
-            robotID: A string corresponding to the Robot-Id
-            topic:   Also a string, corresponding to the topic of the robot
+            topic:   a string, corresponding to the topic in ros
             rawMsg:  the raw data directly obtained from rospy
             msgDefintionDict: The Definition as obtained directly from ROS-Messages
 
@@ -94,82 +92,41 @@ class CbPublisher(Publisher):
 
 
         # if struct not initilized, intitilize it even on ContextBroker!
-        if robotID not in self.posted_history:
-            self.posted_history[robotID] = {}
-            self.posted_history[robotID]['type'] = C.CONTEXT_TYPE
-            self.posted_history[robotID]['id'] = robotID
-            # Intitialize Entitiy/Robot-Construct on ContextBroker
-            jsonStr = ObjectFiwareConverter.obj2Fiware(self.posted_history[robotID], ind=0,  ignorePythonMetaData=True)
+        if topic not in self.posted_history:
+            self.posted_history[topic] = rawMsg
+            
+            obj = {s: getattr(rawMsg, s, None) for s in rawMsg.__slots__}
+            obj["type"] = rawMsg._type.replace("/", ".") # OCB Specific!!
+            obj["id"] = (topic).replace("/", ".") # OCB Specific!!
+            jsonStr = ObjectFiwareConverter.obj2Fiware(obj, ind=None, dataTypeDict=msgDefintionDict[topic],  ignorePythonMetaData=True)
             response = requests.post(self.CB_BASE_URL, data=jsonStr, headers=self.CB_HEADER)
-            self._responseCheck(response, attrAction=0, topEnt=robotID)
-
-        if topic not in self.posted_history[robotID]:
-            self.posted_history[robotID][topic] = {}
-
-        # Check if descriptions are already added, if not execute again with descriptions!
-        if 'descriptions' not in self.posted_history[robotID]:
-            self.posted_history[robotID]['descriptions'] = self._loadDescriptions(robotID)
-            if self.posted_history[robotID]['descriptions'] is not None:
-                self.publish(robotID, 'descriptions', self.posted_history[robotID]['descriptions'], None)
-
-        # check if previous posted topic type is the same, iff not, we do not post it to the context broker
-        if (self.posted_history[robotID][topic] != {} and topic != "descriptions"  
-                and rawMsg._type != self.posted_history[robotID][topic]._type):
-            Log("ERROR",  "Received Msg-Type '{}' but expected '{}' on Topic '{}'".format(rawMsg._type, self.posted_history[robotID][topic]._type, topic))
+            self._responseCheck(response, attrAction=0, topEnt=topic)
             return
 
-        
         # Replace previous rawMsg with current one
-        self.posted_history[robotID][topic] = rawMsg
-        
-        # Set Definition-Dict if not set
-        if msgDefintionDict is None:
-            msgDefintionDict = {}
-        # Convert rawMsg 
-        completeJsonStr = ObjectFiwareConverter.obj2Fiware(self.posted_history[robotID], ind=0, dataTypeDict=msgDefintionDict,  ignorePythonMetaData=True) 
+        self.posted_history[topic] = rawMsg
 
-        # format json, so that the contextbroker accepts it.
-        partJsonStr =  json.dumps({
-            topic: json.loads(completeJsonStr)[topic]
-            })
-
+        # Create Update-JSON
+        obj = {s: getattr(rawMsg, s, None) for s in rawMsg.__slots__}
+        obj["type"] = rawMsg._type.replace("/", ".") # OCB Specific!!
+        obj["id"] = (topic).replace("/", ".") # OCB Specific!!
+        jsonStr = ObjectFiwareConverter.obj2Fiware(obj, ind=0, dataTypeDict=msgDefintionDict[topic],  ignorePythonMetaData=True, showIdValue=False) 
 
         # Update attribute on ContextBroker
-        response = requests.post(self.CB_BASE_URL + robotID + "/attrs", data=partJsonStr, headers=self.CB_HEADER)
+        response = requests.post(self.CB_BASE_URL + obj["id"] + "/attrs", data=jsonStr, headers=self.CB_HEADER)
         self._responseCheck(response, attrAction=1, topEnt=topic)
 
 
     def unpublish(self):
         ''' 
-            Removes all previously tracked Entities/Robots on ContextBroker
+            Removes all previously tracked topics on ContextBroker
             This method also gets automaticall called, someone sent Firos the Shutdown Signal
         '''
-        for robotID in self.posted_history:
-            response = requests.delete(self.CB_BASE_URL + robotID)
-            self._responseCheck(response, attrAction=2, topEnt=robotID)
+        for idd in self.posted_history.keys():
+            response = requests.delete(self.CB_BASE_URL + idd.replace("/", ".")) # OCB Specific!!
+            self._responseCheck(response, attrAction=2, topEnt=idd)
         
         
-    def _loadDescriptions(self, robotID):
-        ''' This simply load the descriptions from the 'robotdescriptions.json'-file and 
-            return its value. We publish the data contained also onto the ContextBroker
-
-            (It is not necessary!)
-
-            robotID: The Robot-Id-String
-        '''
-        
-        json_path = C.PATH + "/robotdescriptions.json"
-
-        if not os.path.isfile(json_path):
-            return None
-        
-        description_data = json.load(open(json_path))
-        # Check if a robotID has descriptions
-        if robotID in description_data:
-            if 'descriptions' in description_data[robotID]:
-                return description_data[robotID]['descriptions']
-
-        return None
 
 
     def _responseCheck(self, response, attrAction=0, topEnt=None):
@@ -181,11 +138,11 @@ class CbPublisher(Publisher):
         '''
         if not response.ok:
             if attrAction == 0:
-                Log("WARNING", "Could not create Entitiy/Robot {} in Contextbroker :".format(topEnt))
+                Log("WARNING", "Could not create Entitiy {} in Contextbroker :".format(topEnt))
                 Log("WARNING", response.content)
             elif attrAction == 1:
                 Log("ERROR", "Cannot update attributes in Contextbroker for topic: {} :".format(topEnt))
                 Log("ERROR", response.content)
             else:
-                Log("WARNING", "Could not delete Entitiy/Robot {} in Contextbroker :".format(topEnt))
+                Log("WARNING", "Could not delete Entitiy {} in Contextbroker :".format(topEnt))
                 Log("WARNING", response.content)
