@@ -51,7 +51,7 @@ class LibLoader:
             In this case we add all directory-names into the search path which
             are available in path and try to retrieve available Message from the System
 
-            'namespace' still needs to be set to the actual package of the Message (TODO DL correct?)
+            'namespace' still needs to be set to the actual package of the Message
         '''
         LibLoader._init_searchpath_for_available_msgs_on_system()
         if len(LibLoader.searchpath) == 0:

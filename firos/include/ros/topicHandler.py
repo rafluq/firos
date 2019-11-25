@@ -78,8 +78,6 @@ def loadMsgHandlers(topics_data):
         is generated and added in its struct.
 
         topics_data: The data, as in topics.json  (and whitelist) specified.
-
-        TODO DL maybe change the message loading to something simpler?
     '''
 
 
@@ -91,7 +89,6 @@ def loadMsgHandlers(topics_data):
         # for each topic and topic in topics_data:
 
         # Load specific message from robot_data
-        # TODO DL maybe change this in config to ._type values? Refactor!
         msg = str(topics_data[topic][0])
         theclass = LibLoader.loadFromSystem(msg, topic) 
         
