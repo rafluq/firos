@@ -167,9 +167,7 @@ def onDisConnect(request, action):
         Ros-Subscriber
 
         We only are here when the URl is like:
-        '/robot/disconnect/ROBOT_ID'
-
-        TODO DL RosConfigurator is here used?
+        '/disconnect/ROBOT_ID'
     '''
     partURL = request.path
     # If at the end is a slash we remove it simply

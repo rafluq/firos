@@ -35,7 +35,7 @@ def getRobots(refresh=False):
     '''
     try:
         # Retrieves the whitelist.json. If it does not exists, it returns all topics.
-        topics_regex = copy.deepcopy(RosConfigurator.systemTopics(refresh))     # TODO DL change to topics
+        topics_regex = copy.deepcopy(RosConfigurator.systemTopics(refresh))
         
         # Retrieves the robots.json.
         topics_json = getTopicsByJson()
