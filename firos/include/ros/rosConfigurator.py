@@ -14,6 +14,7 @@
 # FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import os
 import re
 import json
 import rostopic
@@ -56,6 +57,8 @@ class RosConfigurator:
         '''
         global whitelist
         if whitelist == {} or restore:
+            if not os.path.isfile(C.PATH + "/whitelist.json"):
+                return {}
             json_path = C.PATH + "/whitelist.json"
             whitelist = json.load(open(json_path))
 
